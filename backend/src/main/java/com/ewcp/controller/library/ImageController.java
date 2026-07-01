@@ -1,0 +1,42 @@
+package com.ewcp.controller.library;
+
+import com.ewcp.common.result.R;
+import com.ewcp.entity.Image;
+import com.ewcp.service.SystemService;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/library/image")
+@RequiredArgsConstructor
+public class ImageController {
+
+    private final SystemService systemService;
+
+    @PostMapping("/upload")
+    public R<Map<String, Object>> upload(@RequestParam("file") MultipartFile file) throws IOException {
+        Long id = systemService.uploadImage(file);
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", id);
+        data.put("url", "/api/library/image/" + id);
+        return R.ok(data);
+    }
+
+    @GetMapping("/{id}")
+    public void getImage(@PathVariable Long id, HttpServletResponse response) throws IOException {
+        Image image = systemService.getImage(id);
+        if (image == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        response.setContentType(image.getType() != null ? image.getType() : "application/octet-stream");
+        response.getOutputStream().write(image.getData());
+        response.getOutputStream().flush();
+    }
+}

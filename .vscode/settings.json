@@ -1,0 +1,7 @@
+{
+  "window.zoomLevel": 0.7,
+  "claudeCodeChat.permissions.yoloMode": true,
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}

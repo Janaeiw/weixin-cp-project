@@ -1,0 +1,11 @@
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "后端目录结构和命名规范"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "MyBatis-Plus Entity 和查询规范"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "统一响应格式 R<T> 和异常处理"}
+{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "日志规范"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "多实例部署约束和代码规范"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "前端目录结构（基于 pure-admin-thin）"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Vue 3 组件规范"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Pinia 状态管理规范"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "TypeScript 类型安全规范"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Vite 8 约束和前端质量标准"}
+{"file": ".trellis/tasks/06-29-basic-login-system/research/pure-admin-thin-login.md", "reason": "pure-admin-thin 登录机制研究（API 格式、token 存储、路由守卫）"}
