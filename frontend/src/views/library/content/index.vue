@@ -9,7 +9,12 @@ import {
   onBeforeUnmount
 } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import type { FormInstance, FormRules, UploadProps } from "element-plus";
+import type {
+  FormInstance,
+  FormRules,
+  UploadProps,
+  UploadFile
+} from "element-plus";
 import {
   getContentPage,
   createContent,
@@ -122,6 +127,15 @@ const handleCoverUpload: UploadProps["httpRequest"] = async options => {
 const handleCoverRemove = () => {
   uploadedImageUrl.value = "";
   coverFileList.value = [];
+};
+
+const previewImageUrl = ref("");
+const previewVisible = ref(false);
+const handleCoverPreview = (file: UploadFile) => {
+  if (file.url) {
+    previewImageUrl.value = file.url;
+    previewVisible.value = true;
+  }
 };
 
 // ===== 富文本编辑器 =====
@@ -485,15 +499,12 @@ onMounted(() => {
                 :file-list="coverFileList"
                 :http-request="handleCoverUpload"
                 :on-remove="handleCoverRemove"
+                :on-preview="handleCoverPreview"
                 :limit="1"
-                list-type="picture"
+                list-type="picture-card"
                 accept="image/*"
-                drag
-                class="w-full"
               >
-                <div class="el-upload__text p-4">
-                  将图片拖到此处，或<em>点击上传</em>
-                </div>
+                点击上传
               </el-upload>
               <el-input
                 v-model="form.image"
@@ -530,15 +541,12 @@ onMounted(() => {
                 :file-list="coverFileList"
                 :http-request="handleCoverUpload"
                 :on-remove="handleCoverRemove"
+                :on-preview="handleCoverPreview"
                 :limit="1"
-                list-type="picture"
+                list-type="picture-card"
                 accept="image/*"
-                drag
-                class="w-full"
               >
-                <div class="el-upload__text p-4">
-                  将图片拖到此处，或<em>点击上传</em>
-                </div>
+                点击上传
               </el-upload>
               <el-input
                 v-model="form.image"
@@ -576,6 +584,20 @@ onMounted(() => {
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleSubmit">确定</el-button>
       </template>
+    </el-dialog>
+
+    <!-- 图片预览 -->
+    <el-dialog
+      v-model="previewVisible"
+      title="图片预览"
+      width="400px"
+      append-to-body
+    >
+      <img
+        :src="previewImageUrl"
+        class="w-full object-contain"
+        alt="预览图片"
+      />
     </el-dialog>
   </div>
 </template>
