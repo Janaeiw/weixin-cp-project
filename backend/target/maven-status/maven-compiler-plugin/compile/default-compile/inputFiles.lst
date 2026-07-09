@@ -9,6 +9,7 @@
 /Users/janaeiw/Desktop/project/wisight/EWCP_Project/backend/src/main/java/com/ewcp/config/SecurityConfig.java
 /Users/janaeiw/Desktop/project/wisight/EWCP_Project/backend/src/main/java/com/ewcp/config/WxCpConfig.java
 /Users/janaeiw/Desktop/project/wisight/EWCP_Project/backend/src/main/java/com/ewcp/controller/AuthController.java
+/Users/janaeiw/Desktop/project/wisight/EWCP_Project/backend/src/main/java/com/ewcp/controller/WxCallbackController.java
 /Users/janaeiw/Desktop/project/wisight/EWCP_Project/backend/src/main/java/com/ewcp/controller/library/ImageController.java
 /Users/janaeiw/Desktop/project/wisight/EWCP_Project/backend/src/main/java/com/ewcp/controller/system/ContentController.java
 /Users/janaeiw/Desktop/project/wisight/EWCP_Project/backend/src/main/java/com/ewcp/controller/system/DictController.java

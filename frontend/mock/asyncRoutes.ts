@@ -61,8 +61,8 @@ const systemRouter = {
   meta: {
     title: "系统管理",
     icon: "ep:setting",
-    rank: 99,
-    roles: ["admin"]
+    rank: 99
+    // roles: ["admin"]
   },
   children: [
     {
@@ -70,7 +70,8 @@ const systemRouter = {
       component: "system/user/index",
       name: "SystemUser",
       meta: {
-        title: "用户管理"
+        title: "用户管理",
+        roles: ["admin"]
       }
     },
     {

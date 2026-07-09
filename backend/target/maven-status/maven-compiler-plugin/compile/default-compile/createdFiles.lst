@@ -40,6 +40,7 @@ com/ewcp/mapper/ContentMapper.class
 com/ewcp/config/MybatisPlusMetaHandler.class
 com/ewcp/entity/Dict.class
 com/ewcp/config/MybatisPlusConfig.class
+com/ewcp/controller/WxCallbackController.class
 com/ewcp/common/utils/JwtUtils.class
 com/ewcp/common/exception/BusinessException.class
 com/ewcp/entity/DictData.class
