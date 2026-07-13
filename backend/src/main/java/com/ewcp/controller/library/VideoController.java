@@ -1,6 +1,7 @@
 package com.ewcp.controller.library;
 
 import com.ewcp.common.result.R;
+import com.ewcp.common.utils.MediaValidator;
 import com.ewcp.entity.Video;
 import com.ewcp.service.SystemService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,6 +22,7 @@ public class VideoController {
 
     @PostMapping("/upload")
     public R<Map<String, Object>> upload(@RequestParam("file") MultipartFile file) throws IOException {
+        MediaValidator.validateVideo(file.getBytes(), file.getOriginalFilename());
         Long id = systemService.uploadVideo(file);
         Map<String, Object> data = new HashMap<>();
         data.put("id", id);

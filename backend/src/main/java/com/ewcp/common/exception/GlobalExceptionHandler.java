@@ -37,6 +37,11 @@ public class GlobalExceptionHandler {
         return R.fail(10002, msg);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public R<?> handleIllegalArgument(IllegalArgumentException e) {
+        return R.fail(e.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public R<?> handleException(Exception e) {
         log.error("系统异常", e);

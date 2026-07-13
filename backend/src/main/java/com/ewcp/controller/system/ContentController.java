@@ -72,7 +72,7 @@ public class ContentController {
      *
      * API 规则：
      *   text.content 与 attachments 不能同时为空
-     *   附件类型三选一：image（最多9个）、link（最多1个）、video（最多1个，≤30s/10MB）
+     *   附件类型三选一：image（最多9个）、link（最多1个）、video（最多1个）
      */
     @PostMapping("/send-moment/{id}")
     public R<?> sendMoment(@PathVariable Long id) {
@@ -81,33 +81,31 @@ public class ContentController {
             return R.fail("内容不存在");
         }
 
-        // 校验内容类型（tweet/article 映射为 link 类型发送）
         String type = content.getType();
         if (!"image".equals(type) && !"tweet".equals(type) && !"article".equals(type) && !"video".equals(type)) {
             return R.fail("不支持的内容类型: " + type);
         }
 
-        // 校验 text 与 attachments 不能同时为空
         String momentText = buildMomentText(content);
         String mediaSource = "video".equals(type) ? content.getVideo() : content.getImage();
         if ((momentText == null || momentText.isBlank()) && (mediaSource == null || mediaSource.isBlank())) {
             return R.fail("文本内容与素材不能同时为空");
         }
 
-        // 上传素材为朋友圈附件（图片或视频）
+        // 上传附件
         String mediaId = null;
         if (mediaSource != null && !mediaSource.isBlank()) {
+            byte[] bytes = fetchBytes(mediaSource);
+            if (bytes == null) {
+                return R.fail("无法获取素材");
+            }
             boolean isVideo = "video".equals(type);
             String mediaType = isVideo ? "video" : "image";
-            int attachmentType = 1;
-            String ext = isVideo ? guessVideoExtension(mediaSource) : guessImageExtension(mediaSource);
+            String ext = isVideo ? ".mp4" : guessImageExtension(mediaSource);
             try {
-                mediaId = uploadAsMomentAttachment(mediaSource, ext, mediaType, attachmentType);
+                mediaId = uploadAsMomentAttachment(bytes, ext, mediaType);
             } catch (Exception e) {
-                log.warn("上传朋友圈附件失败: contentId={}, type={}, error={}", id, type, e.getMessage());
-                if ("video".equals(type) || momentText == null || momentText.isBlank()) {
-                    return R.fail("上传附件失败: " + e.getMessage());
-                }
+                return R.fail("上传附件失败: " + e.getMessage());
             }
         }
 
@@ -132,12 +130,14 @@ public class ContentController {
                 attachment.setMsgType("video");
                 attachment.setVideo(video);
             } else {
+                // tweet / article → link 类型，必须有链接
+                if (content.getLink() == null || content.getLink().isBlank()) {
+                    return R.fail("链接不能为空");
+                }
                 Link link = new Link();
                 link.setTitle(content.getTitle());
                 link.setMediaId(mediaId);
-                if (content.getLink() != null) {
-                    link.setUrl(content.getLink());
-                }
+                link.setUrl(content.getLink());
                 attachment.setMsgType("link");
                 attachment.setLink(link);
             }
@@ -146,7 +146,7 @@ public class ContentController {
 
         try {
             Object result = wxCpService.getExternalContactService().addMomentTask(task);
-            log.info("朋友圈任务创建成功: contentId={}, type={}", id, type);
+            log.info("朋友圈任务创建成功: contentId={}", id);
             return R.ok(result);
         } catch (WxErrorException e) {
             log.error("创建朋友圈任务失败: contentId={}", id, e);
@@ -164,29 +164,18 @@ public class ContentController {
         return text;
     }
 
-    /**
-     * 从素材 URL 或本地 DB 路径下载字节流，上传为朋友圈附件，返回 media_id
-     */
-    private String uploadAsMomentAttachment(String source, String ext, String mediaType, int attachmentType)
-            throws Exception {
-        byte[] bytes = fetchBytes(source);
-        if (bytes == null) {
-            throw new IllegalArgumentException("无法获取素材: " + source);
-        }
+    private String uploadAsMomentAttachment(byte[] bytes, String ext, String mediaType) throws Exception {
         File tempFile = File.createTempFile("wx_upload_", ext);
         try {
             try (OutputStream os = new FileOutputStream(tempFile)) {
                 os.write(bytes);
             }
-            return wxMediaUtils.uploadAttachment(tempFile, mediaType + ext, mediaType, attachmentType);
+            return wxMediaUtils.uploadAttachment(tempFile, mediaType + ext, mediaType, 1);
         } finally {
             tempFile.delete();
         }
     }
 
-    /**
-     * 获取素材字节（支持本地 DB 路径 / 外部 URL）
-     */
     private byte[] fetchBytes(String source) {
         if (source == null || source.isBlank()) {
             return null;
@@ -215,15 +204,6 @@ public class ContentController {
         if (path == null) return ".jpg";
         String lower = path.toLowerCase();
         if (lower.contains(".png")) return ".png";
-        if (lower.contains(".gif")) return ".gif";
         return ".jpg";
-    }
-
-    private static String guessVideoExtension(String path) {
-        if (path == null) return ".mp4";
-        String lower = path.toLowerCase();
-        if (lower.contains(".mov")) return ".mov";
-        if (lower.contains(".avi")) return ".avi";
-        return ".mp4";
     }
 }

@@ -579,20 +579,26 @@ onMounted(() => {
             />
           </el-form-item>
           <el-form-item label="推文封面" prop="image">
-            <el-upload
-              :file-list="coverFileList"
-              :http-request="handleCoverUpload"
-              :on-remove="handleCoverRemove"
-              :on-preview="handleCoverPreview"
-              :limit="1"
-              list-type="picture-card"
-              accept="image/*"
-              drag
-            >
-              <div class="el-upload__text">
-                将图片拖到此处，或<em>点击上传</em>
+            <div class="w-full">
+              <el-upload
+                :file-list="coverFileList"
+                :http-request="handleCoverUpload"
+                :on-remove="handleCoverRemove"
+                :on-preview="handleCoverPreview"
+                :limit="1"
+                list-type="picture-card"
+                accept="image/*"
+                drag
+              >
+                <div class="el-upload__text">
+                  将图片拖到此处，或<em>点击上传</em>
+                </div>
+              </el-upload>
+              <div class="text-xs text-gray-400 mt-1">
+                支持 JPG / PNG 格式，文件大小不超过
+                10MB，长边≤10800px，短边≤1080px。
               </div>
-            </el-upload>
+            </div>
           </el-form-item>
         </template>
 
@@ -617,20 +623,26 @@ onMounted(() => {
             />
           </el-form-item>
           <el-form-item label="文章封面" prop="image">
-            <el-upload
-              :file-list="coverFileList"
-              :http-request="handleCoverUpload"
-              :on-remove="handleCoverRemove"
-              :on-preview="handleCoverPreview"
-              :limit="1"
-              list-type="picture-card"
-              accept="image/*"
-              drag
-            >
-              <div class="el-upload__text">
-                将图片拖到此处，或<em>点击上传</em>
+            <div class="w-full">
+              <el-upload
+                :file-list="coverFileList"
+                :http-request="handleCoverUpload"
+                :on-remove="handleCoverRemove"
+                :on-preview="handleCoverPreview"
+                :limit="1"
+                list-type="picture-card"
+                accept="image/*"
+                drag
+              >
+                <div class="el-upload__text">
+                  将图片拖到此处，或<em>点击上传</em>
+                </div>
+              </el-upload>
+              <div class="text-xs text-gray-400 mt-1">
+                支持 JPG / PNG 格式，文件大小不超过
+                10MB，长边≤10800px，短边≤1080px。
               </div>
-            </el-upload>
+            </div>
           </el-form-item>
           <el-form-item label="正文" prop="content">
             <div class="w-full border border-gray-200 rounded">
@@ -660,20 +672,26 @@ onMounted(() => {
             />
           </el-form-item>
           <el-form-item label="图片" prop="image">
-            <el-upload
-              :file-list="coverFileList"
-              :http-request="handleCoverUpload"
-              :on-remove="handleCoverRemove"
-              :on-preview="handleCoverPreview"
-              :limit="1"
-              list-type="picture-card"
-              accept="image/*"
-              drag
-            >
-              <div class="el-upload__text">
-                将图片拖到此处，或<em>点击上传</em>
+            <div class="w-full">
+              <el-upload
+                :file-list="coverFileList"
+                :http-request="handleCoverUpload"
+                :on-remove="handleCoverRemove"
+                :on-preview="handleCoverPreview"
+                :limit="1"
+                list-type="picture-card"
+                accept="image/*"
+                drag
+              >
+                <div class="el-upload__text">
+                  将图片拖到此处，或<em>点击上传</em>
+                </div>
+              </el-upload>
+              <div class="text-xs text-gray-400 mt-1">
+                支持 JPG / PNG 格式，文件大小不超过
+                10MB，长边≤10800px，短边≤1080px。
               </div>
-            </el-upload>
+            </div>
           </el-form-item>
         </template>
 
@@ -688,18 +706,23 @@ onMounted(() => {
             />
           </el-form-item>
           <el-form-item label="视频" prop="video">
-            <el-upload
-              :file-list="videoFileList"
-              :http-request="handleVideoUpload"
-              :on-remove="handleVideoRemove"
-              :limit="1"
-              accept="video/*"
-              drag
-            >
-              <div class="el-upload__text">
-                将视频拖到此处，或<em>点击上传</em>
+            <div class="w-full">
+              <el-upload
+                :file-list="videoFileList"
+                :http-request="handleVideoUpload"
+                :on-remove="handleVideoRemove"
+                :limit="1"
+                accept="video/*"
+                drag
+              >
+                <div class="el-upload__text">
+                  将视频拖到此处，或<em>点击上传</em>
+                </div>
+              </el-upload>
+              <div class="text-xs text-gray-400 mt-1">
+                支持 MP4 格式，文件大小不超过 10MB，时长不超过 30 秒。
               </div>
-            </el-upload>
+            </div>
           </el-form-item>
         </template>
 

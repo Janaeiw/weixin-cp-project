@@ -104,7 +104,7 @@ public class WxMediaUtils {
     }
 
     /**
-     * 从企微 JSON 响应中提取 media_id
+     * 从企微 JSON 响应中提取 media_id，失败时解析 errmsg 抛出可读异常
      */
     public static String extractMediaId(String responseBody) throws IOException {
         if (responseBody != null && responseBody.contains("\"media_id\"")) {
@@ -112,6 +112,15 @@ public class WxMediaUtils {
             int end = responseBody.indexOf("\"", start);
             return responseBody.substring(start, end);
         }
-        throw new IOException("上传响应中未找到 media_id: " + responseBody);
+        // 解析企微错误信息
+        String msg = "上传失败";
+        if (responseBody != null && responseBody.contains("\"errmsg\"")) {
+            int start = responseBody.indexOf("\"errmsg\":\"") + 10;
+            int end = responseBody.indexOf("\"", start);
+            if (start > 9 && end > start) {
+                msg = responseBody.substring(start, end);
+            }
+        }
+        throw new IOException(msg);
     }
 }

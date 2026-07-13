@@ -26,6 +26,7 @@ com/ewcp/config/WxCpConfig.class
 com/ewcp/entity/User.class
 com/ewcp/entity/Role.class
 com/ewcp/entity/RolePermission.class
+com/ewcp/common/utils/MediaValidator.class
 com/ewcp/config/JwtAuthenticationFilter.class
 com/ewcp/common/exception/GlobalExceptionHandler.class
 com/ewcp/mapper/DictMapper.class
