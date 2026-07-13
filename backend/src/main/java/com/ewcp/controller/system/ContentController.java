@@ -5,6 +5,7 @@ import com.ewcp.common.result.R;
 import com.ewcp.common.utils.WxMediaUtils;
 import com.ewcp.entity.Content;
 import com.ewcp.mapper.ImageMapper;
+import com.ewcp.mapper.VideoMapper;
 import com.ewcp.service.SystemService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import me.chanjar.weixin.cp.api.WxCpService;
 import me.chanjar.weixin.cp.bean.external.WxCpAddMomentTask;
 import me.chanjar.weixin.cp.bean.external.msg.Attachment;
 import me.chanjar.weixin.cp.bean.external.msg.Image;
+import me.chanjar.weixin.cp.bean.external.msg.Link;
 import me.chanjar.weixin.cp.bean.external.msg.Text;
 import me.chanjar.weixin.common.error.WxErrorException;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +34,7 @@ public class ContentController {
     private final WxCpService wxCpService;
     private final WxMediaUtils wxMediaUtils;
     private final ImageMapper imageMapper;
+    private final VideoMapper videoMapper;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @GetMapping("/page")
@@ -65,7 +68,11 @@ public class ContentController {
 
     /**
      * 一键发送内容到企微朋友圈
-     * 流程：提取封面图 → 上传朋友圈附件获取 media_id → SDK 创建朋友圈任务
+     * 流程：提取素材 → 上传朋友圈附件获取 media_id → SDK 创建朋友圈任务
+     *
+     * API 规则：
+     *   text.content 与 attachments 不能同时为空
+     *   附件类型三选一：image（最多9个）、link（最多1个）、video（最多1个，≤30s/10MB）
      */
     @PostMapping("/send-moment/{id}")
     public R<?> sendMoment(@PathVariable Long id) {
@@ -74,38 +81,72 @@ public class ContentController {
             return R.fail("内容不存在");
         }
 
-        // 1. 上传封面图为朋友圈附件
+        // 校验内容类型（tweet/article 映射为 link 类型发送）
+        String type = content.getType();
+        if (!"image".equals(type) && !"tweet".equals(type) && !"article".equals(type) && !"video".equals(type)) {
+            return R.fail("不支持的内容类型: " + type);
+        }
+
+        // 校验 text 与 attachments 不能同时为空
+        String momentText = buildMomentText(content);
+        String mediaSource = "video".equals(type) ? content.getVideo() : content.getImage();
+        if ((momentText == null || momentText.isBlank()) && (mediaSource == null || mediaSource.isBlank())) {
+            return R.fail("文本内容与素材不能同时为空");
+        }
+
+        // 上传素材为朋友圈附件（图片或视频）
         String mediaId = null;
-        try {
-            mediaId = uploadImageAsMomentAttachment(content.getImage());
-        } catch (Exception e) {
-            log.warn("上传朋友圈附件失败，将仅发送文字: contentId={}, error={}", id, e.getMessage());
+        if (mediaSource != null && !mediaSource.isBlank()) {
+            boolean isVideo = "video".equals(type);
+            String mediaType = isVideo ? "video" : "image";
+            int attachmentType = 1;
+            String ext = isVideo ? guessVideoExtension(mediaSource) : guessImageExtension(mediaSource);
+            try {
+                mediaId = uploadAsMomentAttachment(mediaSource, ext, mediaType, attachmentType);
+            } catch (Exception e) {
+                log.warn("上传朋友圈附件失败: contentId={}, type={}, error={}", id, type, e.getMessage());
+                if ("video".equals(type) || momentText == null || momentText.isBlank()) {
+                    return R.fail("上传附件失败: " + e.getMessage());
+                }
+            }
         }
 
-        // 2. 构造朋友圈任务（SDK）
+        // 构造朋友圈任务
         WxCpAddMomentTask task = new WxCpAddMomentTask();
-
-        Text text = new Text();
-        String momentText = content.getTitle();
-        if (content.getDescription() != null && !content.getDescription().isBlank()) {
-            momentText += "\n" + content.getDescription();
+        if (momentText != null && !momentText.isBlank()) {
+            Text text = new Text();
+            text.setContent(momentText);
+            task.setText(text);
         }
-        text.setContent(momentText);
-        task.setText(text);
 
         if (mediaId != null) {
-            Image image = new Image();
-            image.setMediaId(mediaId);
             Attachment attachment = new Attachment();
-            attachment.setMsgType("image");
-            attachment.setImage(image);
+            if ("image".equals(type)) {
+                Image image = new Image();
+                image.setMediaId(mediaId);
+                attachment.setMsgType("image");
+                attachment.setImage(image);
+            } else if ("video".equals(type)) {
+                me.chanjar.weixin.cp.bean.external.msg.Video video = new me.chanjar.weixin.cp.bean.external.msg.Video();
+                video.setMediaId(mediaId);
+                attachment.setMsgType("video");
+                attachment.setVideo(video);
+            } else {
+                Link link = new Link();
+                link.setTitle(content.getTitle());
+                link.setMediaId(mediaId);
+                if (content.getLink() != null) {
+                    link.setUrl(content.getLink());
+                }
+                attachment.setMsgType("link");
+                attachment.setLink(link);
+            }
             task.setAttachments(Collections.singletonList(attachment));
         }
 
-        // 3. 调用企微 SDK 创建朋友圈任务
         try {
             Object result = wxCpService.getExternalContactService().addMomentTask(task);
-            log.info("朋友圈任务创建成功: contentId={}", id);
+            log.info("朋友圈任务创建成功: contentId={}, type={}", id, type);
             return R.ok(result);
         } catch (WxErrorException e) {
             log.error("创建朋友圈任务失败: contentId={}", id, e);
@@ -115,56 +156,74 @@ public class ContentController {
 
     // ========== 私有方法 ==========
 
-    /**
-     * 从 image 字段提取图片并上传为朋友圈附件，返回 media_id
-     */
-    private String uploadImageAsMomentAttachment(String imagePath) throws Exception {
-        byte[] imageBytes = fetchImageBytes(imagePath);
-        if (imageBytes == null) {
-            return null;
+    private String buildMomentText(Content content) {
+        String text = content.getTitle();
+        if (content.getDescription() != null && !content.getDescription().isBlank()) {
+            text += "\n" + content.getDescription();
         }
+        return text;
+    }
 
-        String ext = guessExtension(imagePath);
+    /**
+     * 从素材 URL 或本地 DB 路径下载字节流，上传为朋友圈附件，返回 media_id
+     */
+    private String uploadAsMomentAttachment(String source, String ext, String mediaType, int attachmentType)
+            throws Exception {
+        byte[] bytes = fetchBytes(source);
+        if (bytes == null) {
+            throw new IllegalArgumentException("无法获取素材: " + source);
+        }
         File tempFile = File.createTempFile("wx_upload_", ext);
         try {
             try (OutputStream os = new FileOutputStream(tempFile)) {
-                os.write(imageBytes);
+                os.write(bytes);
             }
-            String mediaId = wxMediaUtils.uploadAttachment(tempFile, "image" + ext, "image", 1);
-            log.info("朋友圈附件上传成功: mediaId={}", mediaId);
-            return mediaId;
+            return wxMediaUtils.uploadAttachment(tempFile, mediaType + ext, mediaType, attachmentType);
         } finally {
             tempFile.delete();
         }
     }
 
     /**
-     * 从内容的 image 字段提取图片字节（支持本地 DB 存储和外部 URL）
+     * 获取素材字节（支持本地 DB 路径 / 外部 URL）
      */
-    private byte[] fetchImageBytes(String imagePath) {
-        if (imagePath == null || imagePath.isBlank()) {
+    private byte[] fetchBytes(String source) {
+        if (source == null || source.isBlank()) {
             return null;
         }
         try {
-            if (imagePath.startsWith("/api/image/")) {
-                Long imageId = Long.parseLong(imagePath.substring("/api/image/".length()));
+            if (source.startsWith("/api/image/")) {
+                Long imageId = Long.parseLong(source.substring("/api/image/".length()));
                 com.ewcp.entity.Image dbImage = imageMapper.selectById(imageId);
                 return (dbImage != null && dbImage.getData() != null) ? dbImage.getData() : null;
             }
-            if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
-                return restTemplate.getForObject(imagePath, byte[].class);
+            if (source.startsWith("/api/video/")) {
+                Long videoId = Long.parseLong(source.substring("/api/video/".length()));
+                com.ewcp.entity.Video dbVideo = videoMapper.selectById(videoId);
+                return (dbVideo != null && dbVideo.getData() != null) ? dbVideo.getData() : null;
+            }
+            if (source.startsWith("http://") || source.startsWith("https://")) {
+                return restTemplate.getForObject(source, byte[].class);
             }
         } catch (Exception e) {
-            log.error("获取封面图失败: path={}", imagePath, e);
+            log.error("获取素材失败: path={}", source, e);
         }
         return null;
     }
 
-    private static String guessExtension(String path) {
+    private static String guessImageExtension(String path) {
         if (path == null) return ".jpg";
         String lower = path.toLowerCase();
         if (lower.contains(".png")) return ".png";
         if (lower.contains(".gif")) return ".gif";
         return ".jpg";
+    }
+
+    private static String guessVideoExtension(String path) {
+        if (path == null) return ".mp4";
+        String lower = path.toLowerCase();
+        if (lower.contains(".mov")) return ".mov";
+        if (lower.contains(".avi")) return ".avi";
+        return ".mp4";
     }
 }

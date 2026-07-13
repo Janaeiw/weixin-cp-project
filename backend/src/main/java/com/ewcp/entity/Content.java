@@ -22,6 +22,8 @@ public class Content {
 
     private String image;
 
+    private String video;
+
     private String content;
 
     private Integer status;

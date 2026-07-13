@@ -18,6 +18,13 @@ spring:
         - classpath:db/migration/V1.0.2__content_and_image.sql
         - classpath:db/migration/V1.0.3__content_rename_columns.sql
         - classpath:db/migration/V1.0.4__dict_tables.sql
+        - classpath:db/migration/V1.0.5__content_add_video.sql
+        - classpath:db/migration/V1.0.6__video_table.sql
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
 
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss

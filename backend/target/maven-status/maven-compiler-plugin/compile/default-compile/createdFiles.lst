@@ -3,6 +3,7 @@ com/ewcp/service/impl/UserServiceImpl.class
 com/ewcp/config/SecurityConfig.class
 com/ewcp/common/utils/WxMediaUtils.class
 com/ewcp/dto/moment/MomentPageReq.class
+com/ewcp/mapper/VideoMapper.class
 com/ewcp/controller/system/DictController.class
 com/ewcp/mapper/DictDataMapper.class
 com/ewcp/controller/system/PermissionController.class
@@ -30,6 +31,8 @@ com/ewcp/common/exception/GlobalExceptionHandler.class
 com/ewcp/mapper/DictMapper.class
 com/ewcp/entity/UserRole.class
 com/ewcp/entity/Permission.class
+com/ewcp/controller/library/VideoController.class
+com/ewcp/entity/Video.class
 com/ewcp/mapper/UserMapper.class
 com/ewcp/dto/moment/CreateMomentReq$VisibleRange.class
 com/ewcp/service/UserService.class

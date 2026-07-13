@@ -12,6 +12,7 @@
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/controller/AuthController.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/controller/WxCallbackController.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/controller/library/ImageController.java
+/Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/controller/library/VideoController.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/controller/system/ContentController.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/controller/system/DictController.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/controller/system/PermissionController.java
@@ -29,6 +30,7 @@
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/entity/RolePermission.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/entity/User.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/entity/UserRole.java
+/Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/entity/Video.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/mapper/ContentMapper.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/mapper/DictDataMapper.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/mapper/DictMapper.java
@@ -38,6 +40,7 @@
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/mapper/RolePermissionMapper.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/mapper/UserMapper.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/mapper/UserRoleMapper.java
+/Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/mapper/VideoMapper.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/service/SystemService.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/service/UserService.java
 /Users/janaeiw/Desktop/project/wisight/weixin-cp-project/backend/src/main/java/com/ewcp/service/impl/SystemServiceImpl.java

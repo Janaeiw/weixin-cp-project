@@ -28,6 +28,7 @@ public class SystemServiceImpl implements SystemService {
     private final UserRoleMapper userRoleMapper;
     private final ContentMapper contentMapper;
     private final ImageMapper imageMapper;
+    private final VideoMapper videoMapper;
     private final DictMapper dictMapper;
     private final DictDataMapper dictDataMapper;
     private final PasswordEncoder passwordEncoder;
@@ -302,6 +303,23 @@ public class SystemServiceImpl implements SystemService {
     @Override
     public Image getImage(Long id) {
         return imageMapper.selectById(id);
+    }
+
+    // ========== 视频管理 ==========
+
+    @Override
+    public Long uploadVideo(MultipartFile file) throws IOException {
+        Video video = new Video();
+        video.setName(file.getOriginalFilename());
+        video.setType(file.getContentType());
+        video.setData(file.getBytes());
+        videoMapper.insert(video);
+        return video.getId();
+    }
+
+    @Override
+    public Video getVideo(Long id) {
+        return videoMapper.selectById(id);
     }
 
     // ========== 字典管理 ==========

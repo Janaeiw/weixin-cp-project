@@ -8,6 +8,7 @@ export interface ContentItem {
   title: string;
   description?: string;
   image?: string;
+  video?: string;
   content?: string;
   status: number;
   createTime?: string;

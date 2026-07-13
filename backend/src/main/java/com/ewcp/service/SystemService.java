@@ -64,6 +64,12 @@ public interface SystemService {
 
     Image getImage(Long id);
 
+    // ========== 视频管理 ==========
+
+    Long uploadVideo(MultipartFile file) throws IOException;
+
+    Video getVideo(Long id);
+
     // ========== 字典管理 ==========
 
     Page<Dict> getDictPage(int pageNum, int pageSize, String dictName, Integer status);

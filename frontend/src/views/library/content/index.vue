@@ -24,6 +24,7 @@ import {
   type ContentItem
 } from "@/api/library/content";
 import { uploadImage } from "@/api/common/image";
+import { uploadVideo } from "@/api/common/video";
 import { LinkCard } from "@/components/LinkCard";
 import { useDictStoreHook } from "@/store/modules/dict";
 import { isValidUrl } from "@/utils/validate";
@@ -101,17 +102,11 @@ const handleCurrentChange = (val: number) => {
 };
 
 // ===== 封面图片上传 =====
-const coverFileList = ref<{ name: string; url: string }[]>([]);
-const uploadedImageUrl = ref("");
-
 const handleCoverUpload: UploadProps["httpRequest"] = async options => {
   try {
     const res = await uploadImage(options.file as File);
     if (res.code === 0) {
-      uploadedImageUrl.value = res.data.url;
-      coverFileList.value = [
-        { name: (options.file as File).name, url: res.data.url }
-      ];
+      form.image = res.data.url;
       formRef.value?.clearValidate("image");
       options.onSuccess(res.data);
     } else {
@@ -127,9 +122,40 @@ const handleCoverUpload: UploadProps["httpRequest"] = async options => {
 };
 
 const handleCoverRemove = () => {
-  uploadedImageUrl.value = "";
-  coverFileList.value = [];
+  form.image = "";
 };
+
+// ===== 视频上传 =====
+const handleVideoUpload: UploadProps["httpRequest"] = async options => {
+  try {
+    const res = await uploadVideo(options.file as File);
+    if (res.code === 0) {
+      form.video = res.data.url;
+      formRef.value?.clearValidate("video");
+      options.onSuccess(res.data);
+    } else {
+      // @ts-expect-error element-plus internal type UploadAjaxError not exported
+      options.onError(new Error(res.msg));
+      ElMessage.error(res.msg);
+    }
+  } catch (e) {
+    // @ts-expect-error element-plus internal type UploadAjaxError not exported
+    options.onError(e instanceof Error ? e : new Error("上传失败"));
+    ElMessage.error("上传失败");
+  }
+};
+
+const handleVideoRemove = () => {
+  form.video = "";
+};
+
+// 上传组件 file-list（从 form 字段计算）
+const coverFileList = computed(() =>
+  form.image ? [{ name: "已上传", url: form.image }] : []
+);
+const videoFileList = computed(() =>
+  form.video ? [{ name: "已上传", url: form.video }] : []
+);
 
 const previewImageUrl = ref("");
 const previewVisible = ref(false);
@@ -201,6 +227,7 @@ const form = reactive<Partial<ContentItem>>({
   title: "",
   description: "",
   image: "",
+  video: "",
   content: "",
   status: 1
 });
@@ -227,11 +254,22 @@ const rules = reactive<FormRules>({
   image: [
     {
       required: true,
-      validator: (_rule, value: string, callback) => {
-        if (!value && !uploadedImageUrl.value) {
-          callback(new Error("请上传或输入图片"));
-        } else if (value && !isValidUrl(value)) {
-          callback(new Error("请输入有效的图片链接"));
+      validator: (_rule, _value: string, callback) => {
+        if (!form.image) {
+          callback(new Error("请上传图片"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur"
+    }
+  ],
+  video: [
+    {
+      required: true,
+      validator: (_rule, _value: string, callback) => {
+        if (!form.video) {
+          callback(new Error("请上传视频"));
         } else {
           callback();
         }
@@ -256,33 +294,27 @@ const handleAdd = () => {
     title: "",
     description: "",
     image: "",
+    video: "",
     content: "",
     status: 1
   });
-  coverFileList.value = [];
-  uploadedImageUrl.value = "";
   dialogVisible.value = true;
 };
 
 const handleEdit = (row: ContentItem) => {
   dialogTitle.value = "编辑内容";
   dialogTab.value = row.type;
-  const existingImage = row.image || "";
-  const isUploaded = existingImage.startsWith("/api/image/");
   Object.assign(form, {
     id: row.id,
     type: row.type,
     link: row.link || "",
     title: row.title,
     description: row.description || "",
-    image: isUploaded ? "" : existingImage,
+    image: row.image || "",
+    video: row.video || "",
     content: row.content || "",
     status: row.status
   });
-  uploadedImageUrl.value = isUploaded ? existingImage : "";
-  coverFileList.value = isUploaded
-    ? [{ name: "封面图", url: existingImage }]
-    : [];
   dialogVisible.value = true;
 };
 
@@ -296,10 +328,7 @@ watch(dialogVisible, val => {
 
 const handleSubmit = async () => {
   await formRef.value?.validate();
-  const submitData = {
-    ...form,
-    image: form.image || uploadedImageUrl.value
-  };
+  const submitData = { ...form };
   try {
     const api = form.id ? updateContent : createContent;
     const res = await api(submitData);
@@ -425,6 +454,36 @@ onMounted(() => {
               :title="row.title"
               :description="row.description"
             />
+            <div
+              v-else-if="row.type === 'image'"
+              class="flex gap-3"
+              style="flex-direction: column"
+            >
+              <span>{{ row.title }}</span>
+              <el-image
+                v-if="row.image"
+                :src="row.image"
+                style="width: 100px; height: 100px"
+                fit="cover"
+                class="rounded shrink-0"
+              />
+            </div>
+            <div
+              v-else-if="row.type === 'video'"
+              class="flex gap-3"
+              style="flex-direction: column"
+            >
+              <span>{{ row.title }}</span>
+              <video
+                :src="row.video"
+                controls
+                style="width: 250px; height: 100px"
+                class="rounded shrink-0"
+              />
+            </div>
+            <div v-else>
+              <span>{{ row.title }}</span>
+            </div>
           </template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="80" align="center">
@@ -520,27 +579,20 @@ onMounted(() => {
             />
           </el-form-item>
           <el-form-item label="推文封面" prop="image">
-            <div class="flex flex-col gap-2 w-full">
-              <el-upload
-                :file-list="coverFileList"
-                :http-request="handleCoverUpload"
-                :on-remove="handleCoverRemove"
-                :on-preview="handleCoverPreview"
-                :limit="1"
-                list-type="picture-card"
-                accept="image/*"
-                drag
-              >
-                <div class="el-upload__text">
-                  将图片拖到此处，或<em>点击上传</em>
-                </div>
-              </el-upload>
-              <el-input
-                v-model="form.image"
-                placeholder="或直接粘贴图片链接"
-                clearable
-              />
-            </div>
+            <el-upload
+              :file-list="coverFileList"
+              :http-request="handleCoverUpload"
+              :on-remove="handleCoverRemove"
+              :on-preview="handleCoverPreview"
+              :limit="1"
+              list-type="picture-card"
+              accept="image/*"
+              drag
+            >
+              <div class="el-upload__text">
+                将图片拖到此处，或<em>点击上传</em>
+              </div>
+            </el-upload>
           </el-form-item>
         </template>
 
@@ -565,27 +617,20 @@ onMounted(() => {
             />
           </el-form-item>
           <el-form-item label="文章封面" prop="image">
-            <div class="flex flex-col gap-2 w-full">
-              <el-upload
-                :file-list="coverFileList"
-                :http-request="handleCoverUpload"
-                :on-remove="handleCoverRemove"
-                :on-preview="handleCoverPreview"
-                :limit="1"
-                list-type="picture-card"
-                accept="image/*"
-                drag
-              >
-                <div class="el-upload__text">
-                  将图片拖到此处，或<em>点击上传</em>
-                </div>
-              </el-upload>
-              <el-input
-                v-model="form.image"
-                placeholder="或直接粘贴图片链接"
-                clearable
-              />
-            </div>
+            <el-upload
+              :file-list="coverFileList"
+              :http-request="handleCoverUpload"
+              :on-remove="handleCoverRemove"
+              :on-preview="handleCoverPreview"
+              :limit="1"
+              list-type="picture-card"
+              accept="image/*"
+              drag
+            >
+              <div class="el-upload__text">
+                将图片拖到此处，或<em>点击上传</em>
+              </div>
+            </el-upload>
           </el-form-item>
           <el-form-item label="正文" prop="content">
             <div class="w-full border border-gray-200 rounded">
@@ -601,6 +646,60 @@ onMounted(() => {
                 @onCreated="handleEditorCreated"
               />
             </div>
+          </el-form-item>
+        </template>
+
+        <!-- ===== 图片专属字段 ===== -->
+        <template v-if="form.type === 'image'">
+          <el-form-item label="图片标题" prop="title">
+            <el-input
+              v-model="form.title"
+              placeholder="请输入图片标题"
+              maxlength="50"
+              show-word-limit
+            />
+          </el-form-item>
+          <el-form-item label="图片" prop="image">
+            <el-upload
+              :file-list="coverFileList"
+              :http-request="handleCoverUpload"
+              :on-remove="handleCoverRemove"
+              :on-preview="handleCoverPreview"
+              :limit="1"
+              list-type="picture-card"
+              accept="image/*"
+              drag
+            >
+              <div class="el-upload__text">
+                将图片拖到此处，或<em>点击上传</em>
+              </div>
+            </el-upload>
+          </el-form-item>
+        </template>
+
+        <!-- ===== 视频专属字段 ===== -->
+        <template v-if="form.type === 'video'">
+          <el-form-item label="视频标题" prop="title">
+            <el-input
+              v-model="form.title"
+              placeholder="请输入视频标题"
+              maxlength="50"
+              show-word-limit
+            />
+          </el-form-item>
+          <el-form-item label="视频" prop="video">
+            <el-upload
+              :file-list="videoFileList"
+              :http-request="handleVideoUpload"
+              :on-remove="handleVideoRemove"
+              :limit="1"
+              accept="video/*"
+              drag
+            >
+              <div class="el-upload__text">
+                将视频拖到此处，或<em>点击上传</em>
+              </div>
+            </el-upload>
           </el-form-item>
         </template>
 
