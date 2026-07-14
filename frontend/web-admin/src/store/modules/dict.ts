@@ -1,9 +1,6 @@
 import { defineStore } from "pinia";
 import { store } from "../utils";
-import {
-  getAllDictData,
-  type DictDataItem
-} from "@/api/system/dict";
+import { getAllDictData, type DictDataItem } from "@/api/system/dict";
 
 interface DictState {
   /** 按 dictCode 分组的字典数据 */

@@ -434,10 +434,20 @@ onMounted(fetchData);
         </el-table-column>
         <el-table-column label="操作" width="130" align="center">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="handleDataEdit(row)">
+            <el-button
+              link
+              type="primary"
+              size="small"
+              @click="handleDataEdit(row)"
+            >
               编辑
             </el-button>
-            <el-button link type="danger" size="small" @click="handleDataDelete(row)">
+            <el-button
+              link
+              type="danger"
+              size="small"
+              @click="handleDataDelete(row)"
+            >
               删除
             </el-button>
           </template>
