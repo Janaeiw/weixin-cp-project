@@ -20,6 +20,7 @@ spring:
         - classpath:db/migration/V1.0.4__dict_tables.sql
         - classpath:db/migration/V1.0.5__content_add_video.sql
         - classpath:db/migration/V1.0.6__video_table.sql
+        - classpath:db/migration/V1.0.7__menu_table.sql
 
   servlet:
     multipart:
