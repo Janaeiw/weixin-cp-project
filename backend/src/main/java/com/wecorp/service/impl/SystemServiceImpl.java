@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,12 +26,14 @@ public class SystemServiceImpl implements SystemService {
     private final RoleMapper roleMapper;
     private final PermissionMapper permissionMapper;
     private final UserRoleMapper userRoleMapper;
+    private final MenuMapper menuMapper;
     private final ContentMapper contentMapper;
     private final ImageMapper imageMapper;
     private final VideoMapper videoMapper;
     private final DictMapper dictMapper;
     private final DictDataMapper dictDataMapper;
     private final PasswordEncoder passwordEncoder;
+    private final ObjectMapper objectMapper;
 
     // ========== 用户管理 ==========
 
@@ -199,6 +203,50 @@ public class SystemServiceImpl implements SystemService {
         permissionMapper.deleteBatchIds(ids);
     }
 
+    // ========== 菜单管理 ==========
+
+    @Override
+    public List<Menu> getMenuTree() {
+        List<Menu> all = menuMapper.selectList(
+                new LambdaQueryWrapper<Menu>().orderByAsc(Menu::getRank)
+        );
+        return buildMenuTree(all, 0L);
+    }
+
+    @Override
+    public List<Map<String, Object>> getRouteTree() {
+        List<Menu> all = menuMapper.selectList(
+                new LambdaQueryWrapper<Menu>()
+                        .eq(Menu::getStatus, 1)
+                        .eq(Menu::getShowLink, 1)
+                        .orderByAsc(Menu::getRank)
+        );
+        return buildRouteTree(all, 0L);
+    }
+
+    @Override
+    public Menu getMenuById(Long id) {
+        return menuMapper.selectById(id);
+    }
+
+    @Override
+    public void createMenu(Menu menu) {
+        menuMapper.insert(menu);
+    }
+
+    @Override
+    public void updateMenu(Menu menu) {
+        menuMapper.updateById(menu);
+    }
+
+    @Override
+    @Transactional
+    public void deleteMenu(Long id) {
+        List<Long> ids = collectMenuChildIds(id);
+        ids.add(id);
+        menuMapper.deleteBatchIds(ids);
+    }
+
     // ========== 私有方法 ==========
 
     /**
@@ -252,6 +300,68 @@ public class SystemServiceImpl implements SystemService {
             ids.addAll(collectChildIds(child.getId()));
         }
         return ids;
+    }
+
+    private List<Menu> buildMenuTree(List<Menu> all, Long parentId) {
+        return all.stream()
+                .filter(m -> parentId.equals(m.getParentId()))
+                .peek(m -> m.setChildren(buildMenuTree(all, m.getId())))
+                .collect(Collectors.toList());
+    }
+
+    private List<Long> collectMenuChildIds(Long parentId) {
+        List<Long> ids = new ArrayList<>();
+        List<Menu> children = menuMapper.selectList(
+                new LambdaQueryWrapper<Menu>().eq(Menu::getParentId, parentId)
+        );
+        for (Menu child : children) {
+            ids.add(child.getId());
+            ids.addAll(collectMenuChildIds(child.getId()));
+        }
+        return ids;
+    }
+
+    private List<Map<String, Object>> buildRouteTree(List<Menu> all, Long parentId) {
+        return all.stream()
+                .filter(m -> parentId.equals(m.getParentId()))
+                .map(m -> {
+                    Map<String, Object> route = new LinkedHashMap<>();
+                    route.put("path", m.getPath());
+                    if (m.getName() != null) route.put("name", m.getName());
+                    if (m.getComponent() != null) route.put("component", m.getComponent());
+
+                    Map<String, Object> meta = new LinkedHashMap<>();
+                    meta.put("title", m.getTitle());
+                    if (m.getIcon() != null) meta.put("icon", m.getIcon());
+                    if (m.getRank() != null) meta.put("rank", m.getRank());
+                    if (m.getRoles() != null && !m.getRoles().isEmpty()) {
+                        List<String> roleList = parseJsonArray(m.getRoles());
+                        if (!roleList.isEmpty()) meta.put("roles", roleList);
+                    }
+                    if (m.getAuths() != null && !m.getAuths().isEmpty()) {
+                        List<String> authList = parseJsonArray(m.getAuths());
+                        if (!authList.isEmpty()) meta.put("auths", authList);
+                    }
+                    // pure-admin 的 filterTree 检查 meta.showLink !== false，必须放入 meta
+                    if (m.getShowLink() != null) meta.put("showLink", m.getShowLink() == 1);
+                    route.put("meta", meta);
+
+                    List<Map<String, Object>> children = buildRouteTree(all, m.getId());
+                    if (!children.isEmpty()) {
+                        route.put("children", children);
+                    }
+                    return route;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private List<String> parseJsonArray(String json) {
+        try {
+            return objectMapper.readValue(json, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            log.warn("解析JSON数组失败: {}", json);
+            return Collections.emptyList();
+        }
     }
 
     // ========== 内容库 ==========

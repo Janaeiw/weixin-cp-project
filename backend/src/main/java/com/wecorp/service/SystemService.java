@@ -44,6 +44,20 @@ public interface SystemService {
 
     void deletePermission(Long id);
 
+    // ========== 菜单管理 ==========
+
+    List<Menu> getMenuTree();
+
+    List<Map<String, Object>> getRouteTree();
+
+    Menu getMenuById(Long id);
+
+    void createMenu(Menu menu);
+
+    void updateMenu(Menu menu);
+
+    void deleteMenu(Long id);
+
     // ========== 内容库 ==========
 
     Page<Content> getContentPage(int pageNum, int pageSize, String type, String title, Integer status);

@@ -11,6 +11,7 @@ import com.wecorp.entity.User;
 import com.wecorp.entity.UserRole;
 import com.wecorp.mapper.RoleMapper;
 import com.wecorp.mapper.UserRoleMapper;
+import com.wecorp.service.SystemService;
 import com.wecorp.service.UserService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 public class AuthController {
 
     private final UserService userService;
+    private final SystemService systemService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final UserRoleMapper userRoleMapper;
@@ -68,6 +70,12 @@ public class AuthController {
         data.put("expires", new Date(expires));
 
         return R.ok(data);
+    }
+
+    @GetMapping("/routes")
+    public R<List<Map<String, Object>>> getRoutes() {
+        List<Map<String, Object>> routeTree = systemService.getRouteTree();
+        return R.ok(routeTree);
     }
 
     @Data

@@ -1,9 +1,11 @@
 package com.wecorp.config;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.wecorp.entity.Menu;
 import com.wecorp.entity.Role;
 import com.wecorp.entity.User;
 import com.wecorp.entity.UserRole;
+import com.wecorp.mapper.MenuMapper;
 import com.wecorp.mapper.RoleMapper;
 import com.wecorp.mapper.UserMapper;
 import com.wecorp.mapper.UserRoleMapper;
@@ -22,6 +24,7 @@ public class DataInitializer implements ApplicationRunner {
     private final UserMapper userMapper;
     private final RoleMapper roleMapper;
     private final UserRoleMapper userRoleMapper;
+    private final MenuMapper menuMapper;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -70,6 +73,58 @@ public class DataInitializer implements ApplicationRunner {
             userRole.setRoleId(adminRole.getId());
             userRoleMapper.insert(userRole);
             log.info("已建立 admin 用户与管理员角色的关联");
+        }
+
+        // 4. 确保默认菜单存在
+        seedMenus();
+    }
+
+    private void seedMenus() {
+        Menu systemMenu = menuMapper.selectOne(
+                new LambdaQueryWrapper<Menu>().eq(Menu::getPath, "/system")
+        );
+        if (systemMenu == null) {
+            systemMenu = new Menu();
+            systemMenu.setParentId(0L);
+            systemMenu.setPath("/system");
+            systemMenu.setTitle("系统管理");
+            systemMenu.setIcon("ep:setting");
+            systemMenu.setRank(99);
+            systemMenu.setRoles("[\"admin\"]");
+            systemMenu.setShowLink(1);
+            systemMenu.setStatus(1);
+            menuMapper.insert(systemMenu);
+            log.info("默认系统管理菜单已创建: id={}", systemMenu.getId());
+        }
+
+        seedChildMenu(systemMenu.getId(), "/system/user", "system/user/index", "SystemUser", "用户管理", 1, "[\"admin\"]");
+        seedChildMenu(systemMenu.getId(), "/system/role", "system/role/index", "SystemRole", "角色管理", 2, null);
+        seedChildMenu(systemMenu.getId(), "/system/permission", "system/permission/index", "SystemPermission", "权限管理", 3, null);
+        seedChildMenu(systemMenu.getId(), "/system/organization", "system/organization/index", "SystemOrganization", "机构管理", 4, null);
+        seedChildMenu(systemMenu.getId(), "/system/menu", "system/menu/index", "SystemMenu", "菜单管理", 5, null);
+        seedChildMenu(systemMenu.getId(), "/system/log", "system/log/index", "SystemLog", "日志管理", 6, null);
+        seedChildMenu(systemMenu.getId(), "/system/dict", "system/dict/index", "SystemDict", "字典管理", 7, null);
+        seedChildMenu(systemMenu.getId(), "/system/config", "system/config/index", "SystemConfig", "系统参数管理", 8, null);
+        seedChildMenu(systemMenu.getId(), "/system/job", "system/job/index", "SystemJob", "定时任务管理", 9, null);
+    }
+
+    private void seedChildMenu(Long parentId, String path, String component, String name, String title, int rank, String roles) {
+        Menu existing = menuMapper.selectOne(
+                new LambdaQueryWrapper<Menu>().eq(Menu::getPath, path)
+        );
+        if (existing == null) {
+            Menu menu = new Menu();
+            menu.setParentId(parentId);
+            menu.setPath(path);
+            menu.setComponent(component);
+            menu.setName(name);
+            menu.setTitle(title);
+            menu.setRank(rank);
+            menu.setRoles(roles);
+            menu.setShowLink(1);
+            menu.setStatus(1);
+            menuMapper.insert(menu);
+            log.info("默认子菜单已创建: {} (id={})", title, menu.getId());
         }
     }
 }

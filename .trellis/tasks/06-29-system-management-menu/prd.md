@@ -138,8 +138,57 @@ CREATE TABLE t_role_permission (
 - [ ] 新增数据库迁移脚本
 - [ ] 代码符合 .trellis/spec 规范
 
+### Phase 3（本次任务 — 菜单管理）
+
+#### 后端
+
+1. **菜单管理 CRUD**
+   - 新建表：`t_menu`（参考 asyncRoutes 的路由字段结构）
+   - 接口：
+     - `GET /api/system/menu/tree` — 树形查询（参考权限管理的 tree 接口）
+     - `POST /api/system/menu` — 新增菜单
+     - `PUT /api/system/menu` — 修改菜单
+     - `DELETE /api/system/menu/{id}` — 删除菜单（逻辑删除，级联删除子菜单）
+     - `GET /api/system/menu/{id}` — 查询单个菜单详情
+   - 数据库迁移：`V1.0.7__menu_table.sql`
+
+#### 前端
+
+1. **菜单管理页面** (`src/views/system/menu/index.vue`)
+   - 树形表格展示（参考权限管理页面的 tree-props 模式）
+   - 表格列：标题、图标、路由路径、组件路径、路由名称、排序、是否显示、状态、操作
+   - 操作：新增子菜单、编辑、删除
+   - 弹窗表单：父级菜单（树形选择）、类型、路由路径、组件路径、路由名称、图标、排序、角色权限、是否显示、状态
+
+2. **API 层**
+   - `src/api/system/menu.ts`
+
+## Database Design — Menu
+
+```sql
+CREATE TABLE t_menu (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  parent_id BIGINT DEFAULT 0 COMMENT '父菜单ID',
+  path VARCHAR(200) NOT NULL COMMENT '路由路径',
+  name VARCHAR(100) COMMENT '路由名称',
+  component VARCHAR(255) COMMENT '组件路径',
+  title VARCHAR(64) NOT NULL COMMENT '菜单标题',
+  icon VARCHAR(100) COMMENT '菜单图标',
+  rank INT DEFAULT 0 COMMENT '排序',
+  roles VARCHAR(255) COMMENT '可访问角色(JSON数组)',
+  auths VARCHAR(500) COMMENT '按钮权限(JSON数组)',
+  show_link TINYINT DEFAULT 1 COMMENT '是否显示菜单 1=是 0=否',
+  status TINYINT DEFAULT 1 COMMENT '状态 1=启用 0=禁用',
+  remark VARCHAR(500) COMMENT '备注',
+  deleted INT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
 ## Out of Scope
 
-- 机构管理、菜单管理、日志管理、字典管理、系统参数管理、定时任务管理的 CRUD
+- 机构管理、日志管理、字典管理、系统参数管理、定时任务管理的 CRUD
 - 角色-用户分配 UI
 - 权限校验中间件（Spring Security 权限拦截）
