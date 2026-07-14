@@ -15,14 +15,6 @@ defineOptions({ name: "SystemMenu" });
 // ===== 搜索 =====
 const searchForm = reactive({ title: "" });
 
-let searchTimer: ReturnType<typeof setTimeout> | null = null;
-const handleSearchInput = () => {
-  if (searchTimer) clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
-    fetchData();
-  }, 300);
-};
-
 const handleSearch = () => {
   fetchData();
 };
@@ -207,8 +199,6 @@ onMounted(fetchData);
             class="w-[180px]!"
             placeholder="请输入菜单名称"
             clearable
-            @input="handleSearchInput"
-            @clear="fetchData"
           />
         </el-form-item>
         <el-form-item>
