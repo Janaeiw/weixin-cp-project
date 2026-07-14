@@ -308,10 +308,10 @@ onMounted(fetchData);
       width="600px"
       destroy-on-close
     >
-      <el-tabs v-model="form.menuType" class="mb-4" @tab-change="handleTabChange">
-        <el-tab-pane :name="0" label="菜单" />
-        <el-tab-pane :name="1" label="按钮" />
-      </el-tabs>
+      <el-radio-group v-model="form.menuType" class="mb-4" @change="handleTabChange">
+        <el-radio-button :value="0">菜单</el-radio-button>
+        <el-radio-button :value="1">按钮</el-radio-button>
+      </el-radio-group>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="父级菜单">
           <el-select
