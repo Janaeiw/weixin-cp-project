@@ -58,7 +58,9 @@ public class AuthController {
                     .collect(Collectors.toList());
         }
         // TODO: permissions 后续从 t_role_permission 关联表查询
-        List<String> permissions = List.of();
+        List<String> permissions = roles.contains("admin")
+                ? List.of("*:*:*")
+                : List.of();
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("accessToken", token);
