@@ -234,11 +234,35 @@ public class SystemServiceImpl implements SystemService {
     // ========== 菜单管理 ==========
 
     @Override
-    public List<Menu> getMenuTree() {
+    public List<Menu> getMenuTree(String keyword) {
         List<Menu> all = menuMapper.selectList(
                 new LambdaQueryWrapper<Menu>().orderByAsc(Menu::getRank)
         );
-        return buildMenuTree(all, 0L);
+        List<Menu> tree = buildMenuTree(all, 0L);
+        if (StringUtils.hasText(keyword)) {
+            return filterMenuTree(tree, keyword);
+        }
+        return tree;
+    }
+
+    /**
+     * 递归过滤菜单树：保留 title 包含 keyword 的节点，以及有匹配子节点的父节点
+     */
+    private List<Menu> filterMenuTree(List<Menu> tree, String keyword) {
+        return tree.stream()
+                .map(m -> {
+                    List<Menu> filteredChildren = m.getChildren() != null
+                            ? filterMenuTree(m.getChildren(), keyword)
+                            : Collections.emptyList();
+                    boolean titleMatch = m.getTitle() != null && m.getTitle().contains(keyword);
+                    if (titleMatch || !filteredChildren.isEmpty()) {
+                        m.setChildren(filteredChildren);
+                        return m;
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     @Override

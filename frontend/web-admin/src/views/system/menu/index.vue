@@ -15,13 +15,12 @@ defineOptions({ name: "SystemMenu" });
 // ===== 搜索 =====
 const searchForm = reactive({ title: "" });
 
-const handleSearch = async () => {
-  await fetchData();
-};
-
-const handleReset = async () => {
-  searchForm.title = "";
-  await fetchData();
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+const handleSearchInput = () => {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    fetchData();
+  }, 300);
 };
 
 // ===== 表格数据 =====
@@ -31,7 +30,7 @@ const tableData = ref<MenuItem[]>([]);
 const fetchData = async () => {
   loading.value = true;
   try {
-    const res = await getMenuTree();
+    const res = await getMenuTree(searchForm.title || undefined);
     if (res.code === 0) {
       tableData.value = res.data;
     }
@@ -39,22 +38,6 @@ const fetchData = async () => {
     loading.value = false;
   }
 };
-
-/** 客户端过滤树形数据 */
-function filterTree(data: MenuItem[], keyword: string): MenuItem[] {
-  return data.reduce<MenuItem[]>((acc, item) => {
-    const children = item.children ? filterTree(item.children, keyword) : [];
-    if (item.title.includes(keyword) || children.length) {
-      acc.push({ ...item, children });
-    }
-    return acc;
-  }, []);
-}
-
-const filteredTableData = computed(() => {
-  if (!searchForm.title) return tableData.value;
-  return filterTree(tableData.value, searchForm.title);
-});
 
 // ===== 弹窗表单 =====
 const dialogVisible = ref(false);
@@ -215,12 +198,9 @@ onMounted(fetchData);
             class="w-[180px]!"
             placeholder="请输入菜单名称"
             clearable
-            @clear="handleSearch"
+            @input="handleSearchInput"
+            @clear="fetchData"
           />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -236,7 +216,7 @@ onMounted(fetchData);
 
       <el-table
         v-loading="loading"
-        :data="filteredTableData"
+        :data="tableData"
         row-key="id"
         border
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"

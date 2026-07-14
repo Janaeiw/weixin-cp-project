@@ -50,7 +50,7 @@ public interface SystemService {
 
     // ========== 菜单管理 ==========
 
-    List<Menu> getMenuTree();
+    List<Menu> getMenuTree(String keyword);
 
     List<Map<String, Object>> getRouteTree();
 

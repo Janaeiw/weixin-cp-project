@@ -20,8 +20,10 @@ export interface MenuItem {
 }
 
 /** 树形查询 */
-export const getMenuTree = () => {
-  return http.request<ApiResult<MenuItem[]>>("get", "/api/system/menu/tree");
+export const getMenuTree = (keyword?: string) => {
+  return http.request<ApiResult<MenuItem[]>>("get", "/api/system/menu/tree", {
+    params: keyword ? { keyword } : {}
+  });
 };
 
 /** 查询单个菜单 */

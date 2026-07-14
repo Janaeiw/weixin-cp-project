@@ -16,8 +16,8 @@ public class MenuController {
     private final SystemService systemService;
 
     @GetMapping("/tree")
-    public R<List<Menu>> tree() {
-        return R.ok(systemService.getMenuTree());
+    public R<List<Menu>> tree(@RequestParam(required = false) String keyword) {
+        return R.ok(systemService.getMenuTree(keyword));
     }
 
     @GetMapping("/{id}")
