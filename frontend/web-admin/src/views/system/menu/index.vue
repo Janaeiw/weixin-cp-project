@@ -15,12 +15,13 @@ defineOptions({ name: "SystemMenu" });
 // ===== 搜索 =====
 const searchForm = reactive({ title: "" });
 
-const handleSearch = () => {
-  // 树形数据客户端过滤，computed 自动响应
+const handleSearch = async () => {
+  await fetchData();
 };
 
-const handleReset = () => {
+const handleReset = async () => {
   searchForm.title = "";
+  await fetchData();
 };
 
 // ===== 表格数据 =====
@@ -291,7 +292,7 @@ onMounted(fetchData);
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button link type="primary" @click="handleAdd(row.id)">
+            <el-button v-if="row.menuType !== 1" link type="primary" @click="handleAdd(row.id)">
               新增子菜单
             </el-button>
             <el-button link type="primary" @click="handleEdit(row)">
@@ -314,7 +315,7 @@ onMounted(fetchData);
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="菜单类型" prop="menuType">
-          <el-radio-group v-model="form.menuType" @change="handleTabChange">
+          <el-radio-group v-model="form.menuType" :disabled="!!form.id" @change="handleTabChange">
             <el-radio-button :value="0">菜单</el-radio-button>
             <el-radio-button :value="1">按钮</el-radio-button>
           </el-radio-group>
