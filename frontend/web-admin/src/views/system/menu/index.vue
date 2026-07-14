@@ -161,6 +161,10 @@ const handleEdit = (row: MenuItem) => {
   dialogVisible.value = true;
 };
 
+const handleTabChange = () => {
+  formRef.value?.clearValidate();
+};
+
 const handleSubmit = async () => {
   await formRef.value?.validate();
   try {
@@ -243,7 +247,7 @@ onMounted(fetchData);
               :type="row.menuType === 1 ? 'warning' : 'info'"
               size="small"
             >
-              {{ row.menuType === 1 ? "按钮" : "菜单/目录" }}
+              {{ row.menuType === 1 ? "按钮" : "菜单" }}
             </el-tag>
           </template>
         </el-table-column>
@@ -304,6 +308,10 @@ onMounted(fetchData);
       width="600px"
       destroy-on-close
     >
+      <el-tabs v-model="form.menuType" class="mb-4" @tab-change="handleTabChange">
+        <el-tab-pane :name="0" label="菜单" />
+        <el-tab-pane :name="1" label="按钮" />
+      </el-tabs>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="父级菜单">
           <el-select
@@ -320,12 +328,6 @@ onMounted(fetchData);
               :label="item.title"
               :class="`pl-[${item.level * 20}px]`"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="菜单类型" prop="menuType">
-          <el-select v-model="form.menuType" class="w-full">
-            <el-option :value="0" label="目录/菜单" />
-            <el-option :value="1" label="按钮" />
           </el-select>
         </el-form-item>
         <el-form-item
