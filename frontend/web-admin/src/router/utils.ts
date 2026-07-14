@@ -239,7 +239,11 @@ function formatFlatteningRoutes(routesList: RouteRecordRaw[]) {
   if (routesList.length === 0) return routesList;
   let hierarchyList = buildHierarchyTree(routesList);
   for (let i = 0; i < hierarchyList.length; i++) {
-    if (hierarchyList[i].children) {
+    // 只拼接叶子路由的 children（有 component 的路由），
+    // 对无 component 的父路由（如 /system）不拼接其 children 到顶级，
+    // 避免子路由同时以嵌套和顶级方式注册，导致 Vue Router 优先匹配嵌套路径
+    // 但父路由无组件而渲染失败
+    if (hierarchyList[i].children && hierarchyList[i].component) {
       hierarchyList = hierarchyList
         .slice(0, i + 1)
         .concat(hierarchyList[i].children, hierarchyList.slice(i + 1));
