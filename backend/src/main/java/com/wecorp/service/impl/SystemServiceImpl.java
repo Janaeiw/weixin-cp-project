@@ -304,33 +304,43 @@ public class SystemServiceImpl implements SystemService {
 
     @Override
     public List<Map<String, Object>> getRouteTreeByMenuIds(Set<Long> menuIds) {
-        // 查所有非按钮类型且状态启用的菜单
-        List<Menu> all = menuMapper.selectList(
+        // 查所有状态启用的菜单（含按钮，用于祖先补全）
+        List<Menu> allMenus = menuMapper.selectList(
                 new LambdaQueryWrapper<Menu>()
                         .eq(Menu::getStatus, 1)
-                        .ne(Menu::getMenuType, 1)
                         .orderByAsc(Menu::getRank)
         );
 
-        // 收集 menuIds 中所有菜单的祖先 ID（保证树结构完整）
+        // 收集 menuIds 及其所有祖先 ID
+        // 条件：只有勾选了菜单节点才补全祖先，仅勾选按钮权限不补全
         Set<Long> allowedIds = new HashSet<>(menuIds);
-        for (Menu m : all) {
-            if (allowedIds.contains(m.getId())) {
-                Long curPid = m.getParentId();
-                while (curPid != null && curPid != 0) {
-                    allowedIds.add(curPid);
-                    Long finalCurPid = curPid;
-                    Menu parent = all.stream()
-                            .filter(p -> p.getId().equals(finalCurPid))
-                            .findFirst().orElse(null);
-                    curPid = parent != null ? parent.getParentId() : null;
+        boolean hasNonButton = menuIds.stream()
+                .map(id -> allMenus.stream()
+                        .filter(m -> m.getId().equals(id))
+                        .findFirst().orElse(null))
+                .anyMatch(m -> m != null && (m.getMenuType() == null || m.getMenuType() != 1));
+        if (hasNonButton) {
+            for (Long id : menuIds) {
+                Menu node = allMenus.stream()
+                        .filter(m -> m.getId().equals(id))
+                        .findFirst().orElse(null);
+                if (node != null) {
+                    Long curPid = node.getParentId();
+                    while (curPid != null && curPid != 0) {
+                        allowedIds.add(curPid);
+                        final Long pidToFind = curPid;
+                        Menu parent = allMenus.stream()
+                                .filter(p -> p.getId().equals(pidToFind))
+                                .findFirst().orElse(null);
+                        curPid = parent != null ? parent.getParentId() : null;
+                    }
                 }
             }
         }
 
-        // 只保留 allowedIds 中的菜单
-        List<Menu> filtered = all.stream()
-                .filter(m -> allowedIds.contains(m.getId()))
+        // 只保留 allowedIds 中的非按钮菜单，用于路由构建
+        List<Menu> filtered = allMenus.stream()
+                .filter(m -> allowedIds.contains(m.getId()) && (m.getMenuType() == null || m.getMenuType() != 1))
                 .collect(Collectors.toList());
 
         // 预查关联数据（与 getRouteTree 一致）

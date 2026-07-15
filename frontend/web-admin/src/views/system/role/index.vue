@@ -339,6 +339,7 @@ onMounted(fetchData);
           :default-checked-keys="permCheckedKeys"
           node-key="id"
           show-checkbox
+          check-strictly
           default-expand-all
         />
         <el-empty
