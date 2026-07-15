@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "后端质量检查标准（多实例约束、构造器注入）"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "前端质量检查标准（Vite 8、TypeScript 严格模式）"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "验证统一异常处理和 R<T> 格式"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "验证 TypeScript 类型安全"}
+{"file": ".trellis/tasks/06-29-basic-login-system/research/pure-admin-thin-login.md", "reason": "对照 pure-admin-thin 原始模式验证改造正确性"}

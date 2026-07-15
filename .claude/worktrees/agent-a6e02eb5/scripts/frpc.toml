@@ -1,0 +1,14 @@
+# FRP 客户端配置 - 本地开发穿透
+# 用法: frpc -c frpc.toml
+
+auth.token = "wisight2002"
+
+serverAddr = "117.50.7.245"
+serverPort = 7000
+
+[[proxies]]
+name = "tcp-7001"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 8080
+remotePort = 7001
