@@ -299,7 +299,7 @@ public class SystemServiceImpl implements SystemService {
         Map<Long, List<Menu>> buttonsByParent = buttonMenus.stream()
                 .collect(Collectors.groupingBy(Menu::getParentId));
 
-        return buildRouteTree(all, 0L, menuRoleIdMap, roleIdKeyMap, buttonsByParent);
+        return buildRouteTree(all, 0L, menuRoleIdMap, roleIdKeyMap, buttonsByParent, null);
     }
 
     @Override
@@ -360,7 +360,7 @@ public class SystemServiceImpl implements SystemService {
         Map<Long, List<Menu>> buttonsByParent = buttonMenus.stream()
                 .collect(Collectors.groupingBy(Menu::getParentId));
 
-        return buildRouteTree(filtered, 0L, menuRoleIdMap, roleIdKeyMap, buttonsByParent);
+        return buildRouteTree(filtered, 0L, menuRoleIdMap, roleIdKeyMap, buttonsByParent, allowedIds);
     }
 
     @Override
@@ -467,7 +467,7 @@ public class SystemServiceImpl implements SystemService {
 
     private List<Map<String, Object>> buildRouteTree(List<Menu> all, Long parentId,
             Map<Long, Set<Long>> menuRoleIdMap, Map<Long, String> roleIdKeyMap,
-            Map<Long, List<Menu>> buttonsByParent) {
+            Map<Long, List<Menu>> buttonsByParent, Set<Long> allowedMenuIds) {
         return all.stream()
                 .filter(m -> parentId.equals(m.getParentId()))
                 .map(m -> {
@@ -494,6 +494,11 @@ public class SystemServiceImpl implements SystemService {
                     List<Menu> childButtons = buttonsByParent.getOrDefault(m.getId(), Collections.emptyList());
                     List<String> auths = childButtons.stream()
                             .filter(btn -> {
+                                // 如果指定了 allowedMenuIds，只有在其中的按钮才返回
+                                if (allowedMenuIds != null) {
+                                    return allowedMenuIds.contains(btn.getId());
+                                }
+                                // 否则（管理用）按全局角色关联判断
                                 Set<Long> btnRoles = menuRoleIdMap.getOrDefault(btn.getId(), Collections.emptySet());
                                 return !btnRoles.isEmpty();
                             })
@@ -508,7 +513,7 @@ public class SystemServiceImpl implements SystemService {
                     route.put("meta", meta);
 
                     List<Map<String, Object>> children = buildRouteTree(all, m.getId(),
-                            menuRoleIdMap, roleIdKeyMap, buttonsByParent);
+                            menuRoleIdMap, roleIdKeyMap, buttonsByParent, allowedMenuIds);
                     if (!children.isEmpty()) {
                         route.put("children", children);
                     }
