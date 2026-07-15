@@ -49,7 +49,8 @@ server:
 # JWT 配置
 jwt:
   secret: wecorp-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256
-  expiration: 86400000  # 24小时 (毫秒)
+  expiration: 86400000        # accessToken 24小时 (毫秒)
+  refresh-expiration: 604800000  # refreshToken 7天 (毫秒)
 
 # 企业微信配置
 wx:

@@ -19,6 +19,9 @@ public class JwtUtils {
     @Value("${jwt.expiration}")
     private long expiration;
 
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
+
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
@@ -53,6 +56,27 @@ public class JwtUtils {
         try {
             Claims claims = parseToken(token);
             return !claims.getExpiration().before(new Date());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public String generateRefreshToken(Long userId, String username) {
+        return Jwts.builder()
+                .subject(String.valueOf(userId))
+                .claim("username", username)
+                .claim("type", "refresh")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public boolean isRefreshTokenValid(String token) {
+        try {
+            Claims claims = parseToken(token);
+            String type = claims.get("type", String.class);
+            return "refresh".equals(type) && !claims.getExpiration().before(new Date());
         } catch (Exception e) {
             return false;
         }

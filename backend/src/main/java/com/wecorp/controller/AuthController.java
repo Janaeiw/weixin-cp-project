@@ -44,6 +44,9 @@ public class AuthController {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
+
     @PostMapping("/login")
     public R<Map<String, Object>> login(@Valid @RequestBody LoginDTO dto) {
         User user = userService.getByUsername(dto.getUsername());
@@ -51,8 +54,10 @@ public class AuthController {
             throw new BusinessException("账号或密码错误");
         }
 
-        String token = jwtUtils.generateToken(user.getId(), user.getUsername());
+        String accessToken = jwtUtils.generateToken(user.getId(), user.getUsername());
+        String refreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername());
         long expires = System.currentTimeMillis() + jwtExpiration;
+        long refreshExpires = System.currentTimeMillis() + refreshExpiration;
 
         // 从 t_user_role + t_role 关联表查真实角色
         List<UserRole> userRoles = userRoleMapper.selectList(
@@ -97,13 +102,15 @@ public class AuthController {
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("accessToken", token);
+        data.put("accessToken", accessToken);
+        data.put("refreshToken", refreshToken);
         data.put("username", user.getUsername());
         data.put("nickname", user.getNickname());
         data.put("avatar", user.getAvatar() != null ? user.getAvatar() : "");
         data.put("roles", roles);
         data.put("permissions", permissions);
         data.put("expires", new Date(expires));
+        data.put("refreshExpires", new Date(refreshExpires));
 
         return R.ok(data);
     }
@@ -152,6 +159,33 @@ public class AuthController {
         } catch (Exception e) {
             return List.of();
         }
+    }
+
+    @PostMapping("/refresh-token")
+    public R<Map<String, Object>> refreshToken(@RequestBody Map<String, String> body) {
+        String refreshTokenValue = body.get("refreshToken");
+        if (refreshTokenValue == null || refreshTokenValue.isBlank()) {
+            throw new BusinessException("refreshToken 不能为空");
+        }
+        if (!jwtUtils.isRefreshTokenValid(refreshTokenValue)) {
+            throw new BusinessException("refreshToken 无效或已过期");
+        }
+
+        Long userId = jwtUtils.getUserId(refreshTokenValue);
+        String username = jwtUtils.getUsername(refreshTokenValue);
+
+        String newAccessToken = jwtUtils.generateToken(userId, username);
+        String newRefreshToken = jwtUtils.generateRefreshToken(userId, username);
+        long expires = System.currentTimeMillis() + jwtExpiration;
+        long refreshExpires = System.currentTimeMillis() + refreshExpiration;
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("accessToken", newAccessToken);
+        data.put("refreshToken", newRefreshToken);
+        data.put("expires", new Date(expires));
+        data.put("refreshExpires", new Date(refreshExpires));
+
+        return R.ok(data);
     }
 
     @Data

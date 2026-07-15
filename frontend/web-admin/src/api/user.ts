@@ -19,6 +19,8 @@ export type UserResult = {
     refreshToken: string;
     /** `accessToken`的过期时间（格式'xxxx/xx/xx xx:xx:xx'） */
     expires: Date;
+    /** `refreshToken`的过期时间 */
+    refreshExpires: Date;
   };
 };
 
@@ -31,6 +33,8 @@ export type RefreshTokenResult = {
     refreshToken: string;
     /** `accessToken`的过期时间（格式'xxxx/xx/xx xx:xx:xx'） */
     expires: Date;
+    /** `refreshToken`的过期时间 */
+    refreshExpires: Date;
   };
 };
 
@@ -40,28 +44,26 @@ type BackendLoginResponse = {
   msg: string;
   data: {
     accessToken: string;
+    refreshToken: string;
     username: string;
     nickname: string;
     avatar: string;
     roles: Array<string>;
     permissions: Array<string>;
     expires: Date;
+    refreshExpires: Date;
   };
 };
 
 /** 登录 */
 export const getLogin = (data?: object) => {
-  // return http.request<UserResult>("post", "/login", { data });
   return http
     .request<BackendLoginResponse>("post", "/api/auth/login", { data })
     .then(res => {
       const result: UserResult = {
         success: res.code === 0,
         data: {
-          ...res.data,
-          refreshToken: res.data?.accessToken
-            ? `${res.data.accessToken}Refresh`
-            : ""
+          ...res.data
         }
       };
       return result;
@@ -70,5 +72,5 @@ export const getLogin = (data?: object) => {
 
 /** 刷新`token` */
 export const refreshTokenApi = (data?: object) => {
-  return http.request<RefreshTokenResult>("post", "/refresh-token", { data });
+  return http.request<RefreshTokenResult>("post", "/api/auth/refresh-token", { data });
 };
