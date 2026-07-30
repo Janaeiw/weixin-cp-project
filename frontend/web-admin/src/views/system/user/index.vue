@@ -11,6 +11,12 @@ import {
   type UserItem
 } from "@/api/system/user";
 import { getRoleList, type RoleItem } from "@/api/system/role";
+import {
+  getWxDepartments,
+  getWxDepartmentMembers,
+  type WxDepartment,
+  type WxMember
+} from "@/api/wx/member";
 import { isValidUrl, isValidEmail, isValidPhone } from "@/utils/validate";
 
 defineOptions({ name: "SystemUser" });
@@ -79,6 +85,27 @@ const fetchRoles = async () => {
   }
 };
 
+// ===== 企微部门/成员 =====
+const wxDepartments = ref<WxDepartment[]>([]);
+const wxMembers = ref<WxMember[]>([]);
+
+const fetchWxDepartments = async () => {
+  const res = await getWxDepartments();
+  if (res.code === 0) {
+    wxDepartments.value = res.data;
+  }
+};
+
+const handleDeptChange = async (deptId: number) => {
+  form.wxDeptId = deptId;
+  form.wxUserId = "";
+  wxMembers.value = [];
+  const res = await getWxDepartmentMembers(deptId);
+  if (res.code === 0) {
+    wxMembers.value = res.data;
+  }
+};
+
 // ===== 弹窗表单 =====
 const dialogVisible = ref(false);
 const dialogTitle = ref("新增用户");
@@ -91,6 +118,8 @@ const form = reactive<Partial<UserItem>>({
   avatar: "",
   email: "",
   phone: "",
+  wxDeptId: undefined,
+  wxUserId: "",
   status: 1,
   roleIds: []
 });
@@ -99,6 +128,8 @@ const rules: FormRules = {
   username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
   password: [],
   nickname: [{ required: true, message: "请输入昵称", trigger: "blur" }],
+  wxDeptId: [{ required: true, message: "请选择企微部门", trigger: "change" }],
+  wxUserId: [{ required: true, message: "请选择企微成员", trigger: "change" }],
   roleIds: [{ required: true, message: "请选择角色", trigger: "blur" }],
   avatar: [
     {
@@ -148,13 +179,17 @@ const handleAdd = () => {
     avatar: "",
     email: "",
     phone: "",
+    wxDeptId: undefined,
+    wxUserId: "",
     status: 1,
     roleIds: []
   });
+  wxMembers.value = [];
   dialogVisible.value = true;
+  fetchWxDepartments();
 };
 
-const handleEdit = (row: UserItem) => {
+const handleEdit = async (row: UserItem) => {
   dialogTitle.value = "编辑用户";
   Object.assign(form, {
     id: row.id,
@@ -164,10 +199,21 @@ const handleEdit = (row: UserItem) => {
     avatar: row.avatar || "",
     email: row.email || "",
     phone: row.phone || "",
+    wxDeptId: row.wxDeptId || undefined,
+    wxUserId: row.wxUserId || "",
     status: row.status,
     roleIds: row.roleIds ? [...row.roleIds] : []
   });
+  wxMembers.value = [];
   dialogVisible.value = true;
+  await fetchWxDepartments();
+  // 如果已绑定部门，加载该部门成员列表
+  if (row.wxDeptId) {
+    const res = await getWxDepartmentMembers(row.wxDeptId);
+    if (res.code === 0) {
+      wxMembers.value = res.data;
+    }
+  }
 };
 
 const handleSubmit = async () => {
@@ -217,6 +263,7 @@ const handleResetPwd = (row: UserItem) => {
 onMounted(() => {
   fetchData();
   fetchRoles();
+  fetchWxDepartments();
 });
 </script>
 
@@ -282,6 +329,8 @@ onMounted(() => {
         </el-table-column>
         <el-table-column prop="username" label="用户名" min-width="140" />
         <el-table-column prop="nickname" label="昵称" min-width="120" />
+        <el-table-column prop="wxDeptId" label="企微部门" min-width="120" />
+        <el-table-column prop="wxUserId" label="企微成员" min-width="120" />
         <el-table-column prop="roleNames" label="角色" min-width="120">
           <template #default="{ row }">
             <el-tag
@@ -362,6 +411,33 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="昵称" prop="nickname">
           <el-input v-model="form.nickname" placeholder="请输入昵称" />
+        </el-form-item>
+        <el-form-item label="企微部门" prop="wxDeptId">
+          <el-tree-select
+            v-model="form.wxDeptId"
+            :data="wxDepartments"
+            :props="{ label: 'name', value: 'id', children: 'children' }"
+            placeholder="请选择企微部门"
+            class="w-full"
+            check-strictly
+            default-expand-all
+            @change="handleDeptChange"
+          />
+        </el-form-item>
+        <el-form-item label="企微成员" prop="wxUserId">
+          <el-select
+            v-model="form.wxUserId"
+            placeholder="请先选择部门"
+            class="w-full"
+            :disabled="!form.wxDeptId"
+          >
+            <el-option
+              v-for="member in wxMembers"
+              :key="member.userId"
+              :label="member.name"
+              :value="member.userId"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="角色" prop="roleIds">
           <el-select

@@ -27,6 +27,10 @@ public class User {
 
     private String phone;
 
+    private String wxUserId;
+
+    private Long wxDeptId;
+
     private Long deptId;
 
     @TableField(exist = false)
