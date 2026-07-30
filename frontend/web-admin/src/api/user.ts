@@ -13,6 +13,14 @@ export type UserResult = {
     roles: Array<string>;
     /** 按钮级别权限 */
     permissions: Array<string>;
+    /** 企微成员userId */
+    wxUserId?: string;
+    /** 企微成员名称 */
+    wxUserName?: string;
+    /** 企微部门id */
+    wxDeptId?: number;
+    /** 企微部门名称 */
+    wxDeptName?: string;
     /** `token` */
     accessToken: string;
     /** 用于调用刷新`accessToken`的接口时所需的`token` */
@@ -50,6 +58,10 @@ type BackendLoginResponse = {
     avatar: string;
     roles: Array<string>;
     permissions: Array<string>;
+    wxUserId?: string;
+    wxUserName?: string;
+    wxDeptId?: number;
+    wxDeptName?: string;
     expires: Date;
     refreshExpires: Date;
   };
@@ -72,5 +84,9 @@ export const getLogin = (data?: object) => {
 
 /** 刷新`token` */
 export const refreshTokenApi = (data?: object) => {
-  return http.request<RefreshTokenResult>("post", "/api/auth/refresh-token", { data });
+  return http.request<RefreshTokenResult>(
+    "post",
+    "/api/auth/refresh-token",
+    { data }
+  );
 };

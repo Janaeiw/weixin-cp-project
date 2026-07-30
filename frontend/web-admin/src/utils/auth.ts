@@ -19,6 +19,14 @@ export interface DataInfo<T> {
   roles?: Array<string>;
   /** 当前登录用户的按钮级别权限 */
   permissions?: Array<string>;
+  /** 企微成员userId */
+  wxUserId?: string;
+  /** 企微成员名称 */
+  wxUserName?: string;
+  /** 企微部门id */
+  wxDeptId?: number;
+  /** 企微部门名称 */
+  wxDeptName?: string;
 }
 
 export const userKey = "user-info";
@@ -68,12 +76,26 @@ export function setToken(data: DataInfo<Date>) {
       : {}
   );
 
-  function setUserKey({ avatar, username, nickname, roles, permissions }) {
+  function setUserKey({
+    avatar,
+    username,
+    nickname,
+    roles,
+    permissions,
+    wxUserId,
+    wxUserName,
+    wxDeptId,
+    wxDeptName
+  }) {
     useUserStoreHook().SET_AVATAR(avatar);
     useUserStoreHook().SET_USERNAME(username);
     useUserStoreHook().SET_NICKNAME(nickname);
     useUserStoreHook().SET_ROLES(roles);
     useUserStoreHook().SET_PERMS(permissions);
+    useUserStoreHook().SET_WX_USER_ID(wxUserId);
+    useUserStoreHook().SET_WX_USER_NAME(wxUserName);
+    useUserStoreHook().SET_WX_DEPT_ID(wxDeptId);
+    useUserStoreHook().SET_WX_DEPT_NAME(wxDeptName);
     storageLocal().setItem(userKey, {
       refreshToken,
       expires,
@@ -81,7 +103,11 @@ export function setToken(data: DataInfo<Date>) {
       username,
       nickname,
       roles,
-      permissions
+      permissions,
+      wxUserId,
+      wxUserName,
+      wxDeptId,
+      wxDeptName
     });
   }
 
@@ -92,25 +118,24 @@ export function setToken(data: DataInfo<Date>) {
       username,
       nickname: data?.nickname ?? "",
       roles,
-      permissions: data?.permissions ?? []
+      permissions: data?.permissions ?? [],
+      wxUserId: data?.wxUserId ?? "",
+      wxUserName: data?.wxUserName ?? "",
+      wxDeptId: data?.wxDeptId,
+      wxDeptName: data?.wxDeptName ?? ""
     });
   } else {
-    const avatar =
-      storageLocal().getItem<DataInfo<number>>(userKey)?.avatar ?? "";
-    const username =
-      storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? "";
-    const nickname =
-      storageLocal().getItem<DataInfo<number>>(userKey)?.nickname ?? "";
-    const roles =
-      storageLocal().getItem<DataInfo<number>>(userKey)?.roles ?? [];
-    const permissions =
-      storageLocal().getItem<DataInfo<number>>(userKey)?.permissions ?? [];
+    const stored = storageLocal().getItem<DataInfo<number>>(userKey);
     setUserKey({
-      avatar,
-      username,
-      nickname,
-      roles,
-      permissions
+      avatar: stored?.avatar ?? "",
+      username: stored?.username ?? "",
+      nickname: stored?.nickname ?? "",
+      roles: stored?.roles ?? [],
+      permissions: stored?.permissions ?? [],
+      wxUserId: stored?.wxUserId ?? "",
+      wxUserName: stored?.wxUserName ?? "",
+      wxDeptId: stored?.wxDeptId,
+      wxDeptName: stored?.wxDeptName ?? ""
     });
   }
 }

@@ -30,6 +30,16 @@ export const useUserStore = defineStore("pure-user", {
     // 按钮级别权限
     permissions:
       storageLocal().getItem<DataInfo<number>>(userKey)?.permissions ?? [],
+    // 企微成员userId
+    wxUserId: storageLocal().getItem<DataInfo<number>>(userKey)?.wxUserId ?? "",
+    // 企微成员名称
+    wxUserName:
+      storageLocal().getItem<DataInfo<number>>(userKey)?.wxUserName ?? "",
+    // 企微部门id
+    wxDeptId: storageLocal().getItem<DataInfo<number>>(userKey)?.wxDeptId,
+    // 企微部门名称
+    wxDeptName:
+      storageLocal().getItem<DataInfo<number>>(userKey)?.wxDeptName ?? "",
     // 是否勾选了登录页的免登录
     isRemembered: false,
     // 登录页的免登录存储几天，默认7天
@@ -55,6 +65,22 @@ export const useUserStore = defineStore("pure-user", {
     /** 存储按钮级别权限 */
     SET_PERMS(permissions: Array<string>) {
       this.permissions = permissions;
+    },
+    /** 存储企微成员userId */
+    SET_WX_USER_ID(wxUserId: string) {
+      this.wxUserId = wxUserId;
+    },
+    /** 存储企微成员名称 */
+    SET_WX_USER_NAME(wxUserName: string) {
+      this.wxUserName = wxUserName;
+    },
+    /** 存储企微部门id */
+    SET_WX_DEPT_ID(wxDeptId: number) {
+      this.wxDeptId = wxDeptId;
+    },
+    /** 存储企微部门名称 */
+    SET_WX_DEPT_NAME(wxDeptName: string) {
+      this.wxDeptName = wxDeptName;
     },
     /** 存储是否勾选了登录页的免登录 */
     SET_ISREMEMBERED(bool: boolean) {

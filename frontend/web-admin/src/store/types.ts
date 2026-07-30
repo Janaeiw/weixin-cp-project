@@ -42,6 +42,10 @@ export type userType = {
   nickname?: string;
   roles?: Array<string>;
   permissions?: Array<string>;
+  wxUserId?: string;
+  wxUserName?: string;
+  wxDeptId?: number;
+  wxDeptName?: string;
   isRemembered?: boolean;
   loginDay?: number;
 };
