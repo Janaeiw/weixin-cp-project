@@ -108,7 +108,9 @@ public class AuthController {
         data.put("nickname", user.getNickname());
         data.put("avatar", user.getAvatar() != null ? user.getAvatar() : "");
         data.put("wxUserId", user.getWxUserId() != null ? user.getWxUserId() : "");
+        data.put("wxUserName", user.getWxUserName() != null ? user.getWxUserName() : "");
         data.put("wxDeptId", user.getWxDeptId() != null ? user.getWxDeptId() : "");
+        data.put("wxDeptName", user.getWxDeptName() != null ? user.getWxDeptName() : "");
         data.put("roles", roles);
         data.put("permissions", permissions);
         data.put("expires", new Date(expires));

@@ -29,7 +29,11 @@ public class User {
 
     private String wxUserId;
 
+    private String wxUserName;
+
     private Long wxDeptId;
+
+    private String wxDeptName;
 
     private Long deptId;
 

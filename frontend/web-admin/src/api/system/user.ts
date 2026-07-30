@@ -15,7 +15,9 @@ export type UserItem = {
   roleNames?: string[];
   roleIds?: number[];
   wxUserId?: string;
+  wxUserName?: string;
   wxDeptId?: number;
+  wxDeptName?: string;
   status: number;
   createTime?: string;
 };

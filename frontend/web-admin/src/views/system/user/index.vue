@@ -96,14 +96,36 @@ const fetchWxDepartments = async () => {
   }
 };
 
+/** 从树中查找部门名称 */
+const findDeptName = (
+  depts: WxDepartment[],
+  id: number
+): string | undefined => {
+  for (const d of depts) {
+    if (d.id === id) return d.name;
+    if (d.children) {
+      const found = findDeptName(d.children, id);
+      if (found) return found;
+    }
+  }
+  return undefined;
+};
+
 const handleDeptChange = async (deptId: number) => {
   form.wxDeptId = deptId;
+  form.wxDeptName = findDeptName(wxDepartments.value, deptId) || "";
   form.wxUserId = "";
+  form.wxUserName = "";
   wxMembers.value = [];
   const res = await getWxDepartmentMembers(deptId);
   if (res.code === 0) {
     wxMembers.value = res.data;
   }
+};
+
+const handleMemberChange = (userId: string) => {
+  const member = wxMembers.value.find(m => m.userId === userId);
+  form.wxUserName = member?.name || "";
 };
 
 // ===== 弹窗表单 =====
@@ -119,7 +141,9 @@ const form = reactive<Partial<UserItem>>({
   email: "",
   phone: "",
   wxDeptId: undefined,
+  wxDeptName: "",
   wxUserId: "",
+  wxUserName: "",
   status: 1,
   roleIds: []
 });
@@ -180,7 +204,9 @@ const handleAdd = () => {
     email: "",
     phone: "",
     wxDeptId: undefined,
+    wxDeptName: "",
     wxUserId: "",
+    wxUserName: "",
     status: 1,
     roleIds: []
   });
@@ -200,7 +226,9 @@ const handleEdit = async (row: UserItem) => {
     email: row.email || "",
     phone: row.phone || "",
     wxDeptId: row.wxDeptId || undefined,
+    wxDeptName: row.wxDeptName || "",
     wxUserId: row.wxUserId || "",
+    wxUserName: row.wxUserName || "",
     status: row.status,
     roleIds: row.roleIds ? [...row.roleIds] : []
   });
@@ -263,7 +291,6 @@ const handleResetPwd = (row: UserItem) => {
 onMounted(() => {
   fetchData();
   fetchRoles();
-  fetchWxDepartments();
 });
 </script>
 
@@ -329,8 +356,8 @@ onMounted(() => {
         </el-table-column>
         <el-table-column prop="username" label="用户名" min-width="140" />
         <el-table-column prop="nickname" label="昵称" min-width="120" />
-        <el-table-column prop="wxDeptId" label="企微部门" min-width="120" />
-        <el-table-column prop="wxUserId" label="企微成员" min-width="120" />
+        <el-table-column prop="wxDeptName" label="企微部门" min-width="120" />
+        <el-table-column prop="wxUserName" label="企微成员" min-width="120" />
         <el-table-column prop="roleNames" label="角色" min-width="120">
           <template #default="{ row }">
             <el-tag
@@ -430,6 +457,7 @@ onMounted(() => {
             placeholder="请先选择部门"
             class="w-full"
             :disabled="!form.wxDeptId"
+            @change="handleMemberChange"
           >
             <el-option
               v-for="member in wxMembers"
