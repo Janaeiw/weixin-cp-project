@@ -62,6 +62,11 @@ public class OperationLogAspect {
             return joinPoint.proceed();
         }
 
+        // 跳过文件上传类接口（图片、视频等），日志意义不大且请求体过大
+        if (uri.contains("/upload") || uri.startsWith("/api/image/") || uri.startsWith("/api/video/")) {
+            return joinPoint.proceed();
+        }
+
         // 构建日志对象
         com.wecorp.entity.OperationLog operationLog = new com.wecorp.entity.OperationLog();
         operationLog.setRequestUrl(uri);
@@ -117,11 +122,11 @@ public class OperationLogAspect {
             if (StringUtils.hasText(annotation.operation())) {
                 operationLog.setOperation(annotation.operation());
             } else {
-                operationLog.setOperation(guessOperation(request.getMethod()));
+                operationLog.setOperation(guessOperation(uri, request.getMethod()));
             }
         } else {
             operationLog.setModule(resolveModule(uri));
-            operationLog.setOperation(guessOperation(request.getMethod()));
+            operationLog.setOperation(guessOperation(uri, request.getMethod()));
         }
 
         // 操作人信息
@@ -225,8 +230,26 @@ public class OperationLogAspect {
         return "Other";
     }
 
-    private String guessOperation(String httpMethod) {
-        if (httpMethod == null) return "";
+    /**
+     * 根据 URL 路径和 HTTP 方法推断操作概要。
+     * 优先从 URL 路径关键词推断，找不到则按 HTTP 方法兜底。
+     *
+     * 示例：
+     *   POST /api/library/content/send-moment/11 -> "发送朋友圈"
+     *   PUT  /api/system/user/reset-password/3   -> "重置密码"
+     *   POST /api/system/user                    -> "新增"
+     *   PUT  /api/system/user                    -> "修改"
+     *   DELETE /api/system/user/5                -> "删除"
+     */
+    private String guessOperation(String uri, String httpMethod) {
+        if (uri == null || httpMethod == null) return "";
+
+        // 从 URL 路径提取关键词，匹配已知操作
+        String lower = uri.toLowerCase();
+        if (lower.contains("send-moment"))  return "发送朋友圈";
+        if (lower.contains("reset-password")) return "重置密码";
+
+        // 按 HTTP 方法兜底
         return switch (httpMethod.toUpperCase()) {
             case "GET" -> "查询";
             case "POST" -> "新增";
