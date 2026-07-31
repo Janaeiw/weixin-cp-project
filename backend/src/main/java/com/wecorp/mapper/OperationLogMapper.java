@@ -1,0 +1,9 @@
+package com.wecorp.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.wecorp.entity.OperationLog;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface OperationLogMapper extends BaseMapper<OperationLog> {
+}

@@ -1,0 +1,28 @@
+-- 操作日志表
+CREATE TABLE IF NOT EXISTS `t_operation_log` (
+    `id`               BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `module`           VARCHAR(64)  DEFAULT NULL COMMENT '模块名',
+    `operation`        VARCHAR(64)  DEFAULT NULL COMMENT '操作类型',
+    `method`           VARCHAR(255) DEFAULT NULL COMMENT '请求方法（类名.方法名）',
+    `request_url`      VARCHAR(512) DEFAULT NULL COMMENT '请求URL',
+    `request_method`   VARCHAR(16)  DEFAULT NULL COMMENT '请求方式（GET/POST/PUT/DELETE）',
+    `request_headers`  TEXT         DEFAULT NULL COMMENT '请求头',
+    `request_body`     MEDIUMTEXT   DEFAULT NULL COMMENT '请求体',
+    `response_headers` TEXT         DEFAULT NULL COMMENT '响应头',
+    `response_body`    MEDIUMTEXT   DEFAULT NULL COMMENT '响应体',
+    `status_code`      INT          DEFAULT NULL COMMENT 'HTTP状态码',
+    `operator_id`      BIGINT       DEFAULT NULL COMMENT '操作人ID',
+    `operator_name`    VARCHAR(64)  DEFAULT NULL COMMENT '操作人名称',
+    `ip`               VARCHAR(64)  DEFAULT NULL COMMENT 'IP地址',
+    `os`               VARCHAR(32)  DEFAULT NULL COMMENT '操作系统',
+    `browser`          VARCHAR(32)  DEFAULT NULL COMMENT '浏览器类型',
+    `trace_id`         VARCHAR(64)  DEFAULT NULL COMMENT 'TraceId',
+    `exception_msg`    MEDIUMTEXT   DEFAULT NULL COMMENT '异常信息',
+    `cost_time`        BIGINT       DEFAULT NULL COMMENT '耗时（毫秒）',
+    `deleted`          INT          NOT NULL DEFAULT 0 COMMENT '逻辑删除 0=正常 1=删除',
+    `create_time`      DATETIME     DEFAULT NULL COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    INDEX `idx_create_time` (`create_time`),
+    INDEX `idx_operator_id` (`operator_id`),
+    INDEX `idx_module` (`module`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='操作日志表';

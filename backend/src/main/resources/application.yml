@@ -23,6 +23,7 @@ spring:
         - classpath:db/migration/V1.0.7__menu_table.sql
         - classpath:db/migration/V1.0.8__menu_permission_refactor.sql
         - classpath:db/migration/V1.0.9__user_add_wx_userid.sql
+        - classpath:db/migration/V1.0.10__operation_log_table.sql
 
   servlet:
     multipart:

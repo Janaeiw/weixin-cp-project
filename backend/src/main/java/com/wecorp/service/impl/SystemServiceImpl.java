@@ -34,6 +34,7 @@ public class SystemServiceImpl implements SystemService {
     private final VideoMapper videoMapper;
     private final DictMapper dictMapper;
     private final DictDataMapper dictDataMapper;
+    private final OperationLogMapper operationLogMapper;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
 
@@ -660,4 +661,17 @@ public class SystemServiceImpl implements SystemService {
                         .orderByAsc(DictData::getSort));
         return all.stream().collect(Collectors.groupingBy(DictData::getDictCode));
     }
+
+    // ========== 操作日志 ==========
+
+    @Override
+    public Page<OperationLog> getOperationLogPage(int pageNum, int pageSize, String module, String operation, String operatorName) {
+        LambdaQueryWrapper<OperationLog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(StringUtils.hasText(module), OperationLog::getModule, module)
+               .like(StringUtils.hasText(operation), OperationLog::getOperation, operation)
+               .like(StringUtils.hasText(operatorName), OperationLog::getOperatorName, operatorName)
+               .orderByDesc(OperationLog::getCreateTime);
+        return operationLogMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
+    }
+
 }

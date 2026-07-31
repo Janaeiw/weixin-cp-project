@@ -108,4 +108,8 @@ public interface SystemService {
     void deleteDictData(Long id);
 
     Map<String, List<DictData>> getAllDictData();
+
+    // ========== 操作日志 ==========
+
+    Page<OperationLog> getOperationLogPage(int pageNum, int pageSize, String module, String operation, String operatorName);
 }
