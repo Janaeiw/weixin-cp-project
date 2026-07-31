@@ -67,6 +67,11 @@ public class OperationLogAspect {
             return joinPoint.proceed();
         }
 
+        // 跳过认证类接口（登录、刷新token等），无认证上下文拿不到操作人
+        if (uri.startsWith("/api/auth/")) {
+            return joinPoint.proceed();
+        }
+
         // 构建日志对象
         com.wecorp.entity.OperationLog operationLog = new com.wecorp.entity.OperationLog();
         operationLog.setRequestUrl(uri);
