@@ -91,23 +91,21 @@ const rules: FormRules = {
   ]
 };
 
-// 父级菜单选择列表（扁平化，排除自身及子节点）
-const flattenMenus = (list: MenuItem[], excludeId?: number) => {
-  const result: { id: number; title: string; level: number }[] = [];
-  const walk = (items: MenuItem[], level: number) => {
-    for (const item of items) {
-      if (item.id === excludeId) continue;
-      result.push({ id: item.id, title: item.title, level });
-      if (item.children?.length) {
-        walk(item.children, level + 1);
-      }
-    }
-  };
-  walk(list, 0);
-  return result;
+// 父级菜单树（排除自身及子节点）
+const filterTree = (list: MenuItem[], excludeId?: number): MenuItem[] => {
+  return list
+    .filter(item => item.id !== excludeId)
+    .map(item => ({
+      ...item,
+      children: item.children?.length
+        ? filterTree(item.children, excludeId)
+        : undefined
+    }));
 };
 
-const parentOptions = computed(() => flattenMenus(tableData.value, form.id));
+const parentTreeOptions = computed(() => [
+  { id: 0, title: "顶级菜单", children: filterTree(tableData.value, form.id) }
+]);
 
 const handleAdd = (parentId = 0) => {
   dialogTitle.value = "新增菜单";
@@ -314,21 +312,20 @@ onMounted(fetchData);
           </el-radio-group>
         </el-form-item>
         <el-form-item label="父级菜单">
-          <el-select
+          <el-tree-select
             v-model="form.parentId"
+            :data="parentTreeOptions"
+            :props="{ label: 'title', value: 'id', children: 'children' }"
             placeholder="无（顶级菜单）"
             clearable
             class="w-full"
+            check-strictly
+            default-expand-all
           >
-            <el-option :value="0" label="顶级菜单" />
-            <el-option
-              v-for="item in parentOptions"
-              :key="item.id"
-              :value="item.id"
-              :label="item.title"
-              :class="`pl-[${item.level * 20}px]`"
-            />
-          </el-select>
+            <template #default="{ data }">
+              <span>{{ data.title }}</span>
+            </template>
+          </el-tree-select>
         </el-form-item>
         <el-form-item
           v-if="form.menuType === 1"
