@@ -144,7 +144,20 @@ public class OperationLogAspect {
         Object result;
         try {
             result = joinPoint.proceed();
-            operationLog.setStatusCode(200);
+            // 响应状态码
+            HttpServletResponse response = attributes.getResponse();
+            if (response != null) {
+                operationLog.setStatusCode(response.getStatus());
+                // 响应头
+                Map<String, String> respHeaders = new LinkedHashMap<>();
+                for (String name : response.getHeaderNames()) {
+                    respHeaders.put(name, response.getHeader(name));
+                }
+                operationLog.setResponseHeaders(toJson(respHeaders));
+            } else {
+                operationLog.setStatusCode(200);
+            }
+            // 响应体
             try {
                 String responseBody = objectMapper.writeValueAsString(result);
                 if (responseBody.length() > 65535) {

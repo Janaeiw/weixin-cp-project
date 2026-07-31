@@ -264,69 +264,37 @@ onMounted(() => {
         <el-tabs class="mt-4">
           <el-tab-pane label="请求">
             <div class="mb-2 font-medium">请求头</div>
-            <div style="height: 250px; overflow: auto">
+            <div style="max-height: 200px; overflow: auto">
               <vue-json-pretty
-                v-if="safeParseJson(detailRow.requestHeaders)"
                 :data="safeParseJson(detailRow.requestHeaders)"
                 :deep="2"
                 :show-length="true"
               />
-              <el-input
-                v-else
-                type="textarea"
-                :model-value="detailRow.requestHeaders"
-                :rows="3"
-                readonly
-              />
             </div>
             <div class="mt-3 mb-2 font-medium">请求体</div>
-            <div style="height: 250px; overflow: auto">
+            <div style="max-height: 200px; overflow: auto">
               <vue-json-pretty
-                v-if="safeParseJson(detailRow.requestBody)"
                 :data="safeParseJson(detailRow.requestBody)"
                 :deep="3"
                 :show-length="true"
-              />
-              <el-input
-                v-else
-                type="textarea"
-                :model-value="detailRow.requestBody"
-                :rows="3"
-                readonly
               />
             </div>
           </el-tab-pane>
           <el-tab-pane label="响应">
             <div class="mb-2 font-medium">响应头</div>
-            <div style="height: 250px; overflow: auto">
+            <div style="max-height: 200px; overflow: auto">
               <vue-json-pretty
-                v-if="safeParseJson(detailRow.responseHeaders)"
                 :data="safeParseJson(detailRow.responseHeaders)"
                 :deep="2"
                 :show-length="true"
               />
-              <el-input
-                v-else
-                type="textarea"
-                :model-value="detailRow.responseHeaders"
-                :rows="3"
-                readonly
-              />
             </div>
             <div class="mt-3 mb-2 font-medium">响应体</div>
-            <div style="height: 250px; overflow: auto">
+            <div style="max-height: 200px; overflow: auto">
               <vue-json-pretty
-                v-if="safeParseJson(detailRow.responseBody)"
                 :data="safeParseJson(detailRow.responseBody)"
                 :deep="3"
                 :show-length="true"
-              />
-              <el-input
-                v-else
-                type="textarea"
-                :model-value="detailRow.responseBody"
-                :rows="3"
-                readonly
               />
             </div>
           </el-tab-pane>
