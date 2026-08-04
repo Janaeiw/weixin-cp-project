@@ -48,11 +48,10 @@ public class WecomCustomerSyncTask implements ApplicationRunner {
             return;
         }
         try {
-            log.info("{}：开始同步企微客户数据", source);
+            log.info("{}：开始同步企微客户和客群数据", source);
             wecomCustomerService.syncCustomers();
-            // TODO: 暂时关闭客群同步，观察客户同步日志后再开启
-            // wecomCustomerService.syncGroupChats();
-            log.info("{}：企微客户数据同步完成", source);
+            wecomCustomerService.syncGroupChats();
+            log.info("{}：企微客户和客群数据同步完成", source);
         } catch (Exception e) {
             log.error("{}：同步企微客户数据失败", source, e);
         } finally {

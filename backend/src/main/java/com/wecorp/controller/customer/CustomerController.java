@@ -78,9 +78,11 @@ public class CustomerController {
     public R<IPage<WecomGroupChat>> getGroupChatList(
             @RequestParam String userId,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String owner,
+            @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "20") Integer pageSize) {
-        IPage<WecomGroupChat> page = wecomCustomerService.getGroupChatList(userId, keyword, pageNum, pageSize);
+        IPage<WecomGroupChat> page = wecomCustomerService.getGroupChatList(userId, keyword, owner, status, pageNum, pageSize);
         return R.ok(page);
     }
 

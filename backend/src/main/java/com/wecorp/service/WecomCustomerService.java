@@ -43,11 +43,13 @@ public interface WecomCustomerService {
      *
      * @param userid   企微员工userid
      * @param keyword  搜索关键词（群名）
+     * @param owner    群主
+     * @param status   状态
      * @param pageNum  页码
      * @param pageSize 每页数量
      * @return 客群分页列表
      */
-    IPage<WecomGroupChat> getGroupChatList(String userid, String keyword, Integer pageNum, Integer pageSize);
+    IPage<WecomGroupChat> getGroupChatList(String userid, String keyword, String owner, Integer status, Integer pageNum, Integer pageSize);
 
     /**
      * 获取客群详情（包含成员列表）

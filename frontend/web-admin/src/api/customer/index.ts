@@ -118,6 +118,8 @@ export const getCustomerFollows = (externalUserid: string) => {
 export const getGroupChatList = (params: {
   userId: string;
   keyword?: string;
+  owner?: string;
+  status?: number;
   pageNum?: number;
   pageSize?: number;
 }) => {

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useUserStoreHook } from "@/store/modules/user";
+import { useDictStoreHook } from "@/store/modules/dict";
 import { getGroupChatList, type WecomGroupChat } from "@/api/customer";
 import GroupChatDetail from "./components/GroupChatDetail.vue";
 
@@ -9,8 +10,26 @@ defineOptions({ name: "WxCustomerGroup" });
 
 const { wxUserId } = storeToRefs(useUserStoreHook());
 
+// ===== 字典 =====
+const dictStore = useDictStoreHook();
+const statusOptions = computed(() => dictStore.getDictByCode("customer_group_status"));
+
+const statusLabel = (val: number) => {
+  const item = statusOptions.value.find(d => d.value === String(val));
+  return item?.label ?? "未知";
+};
+
+const statusTagType = (val: number) => {
+  const map: Record<number, "danger" | "success"> = { 0: "danger", 1: "success" };
+  return map[val] || "info";
+};
+
 // ===== 搜索 =====
-const searchForm = ref({ keyword: "" });
+const searchForm = ref({
+  keyword: "",
+  owner: "",
+  status: undefined as number | undefined
+});
 
 // ===== 表格 =====
 const loading = ref(false);
@@ -26,6 +45,8 @@ const fetchData = async () => {
     const res = await getGroupChatList({
       userId: wxUserId.value,
       keyword: searchForm.value.keyword || undefined,
+      owner: searchForm.value.owner || undefined,
+      status: searchForm.value.status,
       pageNum: pageNum.value,
       pageSize: pageSize.value
     });
@@ -44,7 +65,7 @@ const handleSearch = () => {
 };
 
 const handleReset = () => {
-  searchForm.value.keyword = "";
+  searchForm.value = { keyword: "", owner: "", status: undefined };
   handleSearch();
 };
 
@@ -68,7 +89,7 @@ const handleViewDetail = (row: WecomGroupChat) => {
 };
 
 // ===== 格式化时间戳 =====
-const formatTimestamp = (timestamp: number) => {
+const formatTimestamp = (timestamp: number | null | undefined) => {
   if (!timestamp) return "-";
   return new Date(timestamp * 1000).toLocaleString();
 };
@@ -86,11 +107,35 @@ onMounted(() => {
         <el-form-item label="群名称">
           <el-input
             v-model="searchForm.keyword"
-            class="w-[180px]!"
+            class="w-[150px]!"
             placeholder="请输入群名"
             clearable
             @keyup.enter="handleSearch"
           />
+        </el-form-item>
+        <el-form-item label="群主">
+          <el-input
+            v-model="searchForm.owner"
+            class="w-[130px]!"
+            placeholder="请输入群主"
+            clearable
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select
+            v-model="searchForm.status"
+            class="w-[120px]!"
+            placeholder="全部"
+            clearable
+          >
+            <el-option
+              v-for="item in statusOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="Number(item.value)"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">搜索</el-button>
@@ -109,34 +154,26 @@ onMounted(() => {
 
       <template v-else>
         <el-table v-loading="loading" :data="tableData" stripe border>
-          <el-table-column
-            prop="name"
-            label="群名"
-            min-width="200"
-            show-overflow-tooltip
-          />
+          <el-table-column type="index" label="编号" width="70" align="center" />
+          <el-table-column prop="name" label="群名" min-width="180" show-overflow-tooltip />
           <el-table-column prop="owner" label="群主" width="120" />
-          <el-table-column
-            prop="memberCount"
-            label="成员数"
-            width="100"
-            align="center"
-          />
-          <el-table-column label="创建时间" min-width="160" align="center">
+          <el-table-column prop="memberCount" label="成员数" width="90" align="center" />
+          <el-table-column label="状态" width="90" align="center">
+            <template #default="{ row }">
+              <el-tag :type="statusTagType(row.status)" size="small">
+                {{ statusLabel(row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="notice" label="群公告" min-width="200" show-overflow-tooltip />
+          <el-table-column label="创建时间" width="170" align="center">
             <template #default="{ row }">
               {{ formatTimestamp(row.createTimeField) }}
             </template>
           </el-table-column>
-          <el-table-column
-            label="操作"
-            width="100"
-            fixed="right"
-            align="center"
-          >
+          <el-table-column label="操作" width="100" fixed="right" align="center">
             <template #default="{ row }">
-              <el-button link type="primary" @click="handleViewDetail(row)"
-                >详情</el-button
-              >
+              <el-button link type="primary" @click="handleViewDetail(row)">详情</el-button>
             </template>
           </el-table-column>
         </el-table>

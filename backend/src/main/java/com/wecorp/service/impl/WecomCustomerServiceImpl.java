@@ -348,14 +348,24 @@ public class WecomCustomerServiceImpl implements WecomCustomerService {
     }
 
     @Override
-    public IPage<WecomGroupChat> getGroupChatList(String userid, String keyword, Integer pageNum, Integer pageSize) {
+    public IPage<WecomGroupChat> getGroupChatList(String userid, String keyword, String owner, Integer status, Integer pageNum, Integer pageSize) {
         Page<WecomGroupChat> page = new Page<>(pageNum, pageSize);
 
-        LambdaQueryWrapper<WecomGroupChat> wrapper = new LambdaQueryWrapper<WecomGroupChat>()
-                .eq(WecomGroupChat::getOwner, userid);
+        LambdaQueryWrapper<WecomGroupChat> wrapper = new LambdaQueryWrapper<>();
 
+        // 群主
+        if (StringUtils.isNotBlank(owner)) {
+            wrapper.eq(WecomGroupChat::getOwner, owner);
+        }
+
+        // 群名
         if (StringUtils.isNotBlank(keyword)) {
             wrapper.like(WecomGroupChat::getName, keyword);
+        }
+
+        // 状态
+        if (status != null) {
+            wrapper.eq(WecomGroupChat::getStatus, status);
         }
 
         wrapper.orderByDesc(WecomGroupChat::getCreateTime);
