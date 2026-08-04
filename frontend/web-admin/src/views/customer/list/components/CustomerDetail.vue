@@ -138,12 +138,6 @@ const parseJson = (jsonStr: string | null | undefined) => {
     return [];
   }
 };
-
-// ===== 格式化时间戳 =====
-const formatTimestamp = (timestamp: number | null | undefined) => {
-  if (!timestamp) return "-";
-  return new Date(timestamp * 1000).toLocaleString();
-};
 </script>
 
 <template>
@@ -175,7 +169,7 @@ const formatTimestamp = (timestamp: number | null | undefined) => {
         "
       >
         <!-- 基本信息 -->
-        <div class="border-b border-gray-200 flex-shrink-0">
+        <div class="flex-shrink-0">
           <div class="flex items-start gap-6">
             <el-avatar :src="customer.avatar" :size="60">
               {{ customer.name?.charAt(0) }}
@@ -231,7 +225,7 @@ const formatTimestamp = (timestamp: number | null | undefined) => {
           </div>
         </div>
 
-        <br />
+        <el-divider />
 
         <!-- 跟进人列表 -->
         <div class="flex-1 overflow-auto">
@@ -275,7 +269,7 @@ const formatTimestamp = (timestamp: number | null | undefined) => {
                     follow.operatorUserid || "-"
                   }}</el-descriptions-item>
                   <el-descriptions-item label="添加时间">{{
-                    formatTimestamp(follow.followCreateTime)
+                    follow.followCreateTime ?? "-"
                   }}</el-descriptions-item>
                   <el-descriptions-item label="记录创建时间">{{
                     follow.createTime || "-"

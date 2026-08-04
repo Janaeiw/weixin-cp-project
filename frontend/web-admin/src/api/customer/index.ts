@@ -26,7 +26,7 @@ export type WecomCustomerFollow = {
   userid: string;
   remark: string;
   description: string;
-  followCreateTime: number;
+  followCreateTime: string;
   state: string;
   remarkCompany: string;
   remarkMobiles: string;
@@ -46,10 +46,13 @@ export type WecomGroupChat = {
   chatId: string;
   name: string;
   owner: string;
-  createTimeField: number;
+  createTimeField: string;
   notice: string;
   memberCount: number;
+  /** 跟进人状态: 0-跟进人正常 1-跟进人离职 2-离职继承中 3-离职继承完成 */
   status: number;
+  adminList: string;
+  memberVersion: string;
   createTime: string;
   updateTime: string;
 };
@@ -60,10 +63,12 @@ export type WecomGroupChatMember = {
   chatId: string;
   userId: string;
   memberType: number;
-  joinTime: number;
+  joinTime: string;
   joinScene: number;
   groupNickname: string;
   name: string;
+  invitor: string;
+  unionId: string;
   createTime: string;
 };
 

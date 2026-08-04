@@ -18,13 +18,20 @@ public class WecomGroupChatMember {
 
     private Integer memberType;
 
-    private Long joinTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime joinTime;
 
     private Integer joinScene;
 
     private String groupNickname;
 
     private String name;
+
+    /** 邀请者userid */
+    private String invitor;
+
+    /** 微信开放平台unionid */
+    private String unionId;
 
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

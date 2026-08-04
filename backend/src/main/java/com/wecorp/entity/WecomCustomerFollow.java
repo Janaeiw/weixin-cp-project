@@ -20,7 +20,8 @@ public class WecomCustomerFollow {
 
     private String description;
 
-    private Long followCreateTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime followCreateTime;
 
     private String state;
 

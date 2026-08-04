@@ -12,7 +12,9 @@ const { wxUserId } = storeToRefs(useUserStoreHook());
 
 // ===== 字典 =====
 const dictStore = useDictStoreHook();
-const statusOptions = computed(() => dictStore.getDictByCode("customer_group_status"));
+const statusOptions = computed(() =>
+  dictStore.getDictByCode("customer_group_status")
+);
 
 const statusLabel = (val: number) => {
   const item = statusOptions.value.find(d => d.value === String(val));
@@ -20,7 +22,12 @@ const statusLabel = (val: number) => {
 };
 
 const statusTagType = (val: number) => {
-  const map: Record<number, "danger" | "success"> = { 0: "danger", 1: "success" };
+  const map: Record<number, "success" | "danger" | "warning"> = {
+    0: "success",
+    1: "danger",
+    2: "warning",
+    3: "success"
+  };
   return map[val] || "info";
 };
 
@@ -88,12 +95,6 @@ const handleViewDetail = (row: WecomGroupChat) => {
   detailVisible.value = true;
 };
 
-// ===== 格式化时间戳 =====
-const formatTimestamp = (timestamp: number | null | undefined) => {
-  if (!timestamp) return "-";
-  return new Date(timestamp * 1000).toLocaleString();
-};
-
 onMounted(() => {
   fetchData();
 });
@@ -154,26 +155,53 @@ onMounted(() => {
 
       <template v-else>
         <el-table v-loading="loading" :data="tableData" stripe border>
-          <el-table-column type="index" label="编号" width="70" align="center" />
-          <el-table-column prop="name" label="群名" min-width="180" show-overflow-tooltip />
-          <el-table-column prop="owner" label="群主" width="120" />
-          <el-table-column prop="memberCount" label="成员数" width="90" align="center" />
-          <el-table-column label="状态" width="90" align="center">
+          <el-table-column
+            type="index"
+            label="编号"
+            width="70"
+            align="center"
+          />
+          <el-table-column
+            prop="name"
+            label="群名"
+            min-width="140"
+            show-overflow-tooltip
+          />
+          <el-table-column prop="owner" label="群主" width="160" />
+          <el-table-column
+            prop="memberCount"
+            label="成员数"
+            width="90"
+            align="center"
+          />
+          <el-table-column label="状态" width="140" align="center">
             <template #default="{ row }">
               <el-tag :type="statusTagType(row.status)" size="small">
                 {{ statusLabel(row.status) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="notice" label="群公告" min-width="200" show-overflow-tooltip />
+          <el-table-column
+            prop="notice"
+            label="群公告"
+            min-width="180"
+            show-overflow-tooltip
+          />
           <el-table-column label="创建时间" width="170" align="center">
             <template #default="{ row }">
-              {{ formatTimestamp(row.createTimeField) }}
+              {{ row.createTimeField ?? "-" }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="100" fixed="right" align="center">
+          <el-table-column
+            label="操作"
+            width="100"
+            fixed="right"
+            align="center"
+          >
             <template #default="{ row }">
-              <el-button link type="primary" @click="handleViewDetail(row)">详情</el-button>
+              <el-button link type="primary" @click="handleViewDetail(row)"
+                >详情</el-button
+              >
             </template>
           </el-table-column>
         </el-table>

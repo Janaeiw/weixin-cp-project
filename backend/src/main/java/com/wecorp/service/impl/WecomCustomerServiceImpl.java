@@ -28,7 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.stream.Collectors;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -151,7 +153,7 @@ public class WecomCustomerServiceImpl implements WecomCustomerService {
                     follow.setUserid(followedUser.getUserId());
                     follow.setRemark(followedUser.getRemark());
                     follow.setDescription(followedUser.getDescription());
-                    follow.setFollowCreateTime(followedUser.getCreateTime());
+                    follow.setFollowCreateTime(toDateTime(followedUser.getCreateTime()));
                     follow.setState(followedUser.getState());
                     follow.setRemarkCompany(followedUser.getRemarkCompany());
                     follow.setRemarkCorpName(followedUser.getRemarkCorpName());
@@ -218,7 +220,7 @@ public class WecomCustomerServiceImpl implements WecomCustomerService {
 
                 int batchSize = listInfo.getGroupChatList().size();
                 for (WxCpUserExternalGroupChatList.ChatStatus chatStatus : listInfo.getGroupChatList()) {
-                    syncGroupChatDetail(chatStatus.getChatId());
+                    syncGroupChatDetail(chatStatus.getChatId(), chatStatus.getStatus());
                     total++;
                 }
 
@@ -233,7 +235,7 @@ public class WecomCustomerServiceImpl implements WecomCustomerService {
         }
     }
 
-    private void syncGroupChatDetail(String chatId) {
+    private void syncGroupChatDetail(String chatId, Integer status) {
         try {
             log.debug("同步客群详情: {}", chatId);
             WxCpUserExternalGroupChatInfo chatInfo = wxCpService.getExternalContactService()
@@ -252,15 +254,30 @@ public class WecomCustomerServiceImpl implements WecomCustomerService {
             chat.setChatId(groupChat.getChatId());
             chat.setName(groupChat.getName());
             chat.setOwner(groupChat.getOwner());
-            chat.setCreateTimeField(groupChat.getCreateTime());
+            chat.setCreateTimeField(toDateTime(groupChat.getCreateTime()));
             chat.setNotice(groupChat.getNotice());
             chat.setMemberCount(memberCount);
-            chat.setStatus(1);
+            chat.setMemberVersion(groupChat.getMemberVersion());
+
+            // 管理员列表 -> JSON
+            if (groupChat.getAdminList() != null) {
+                List<String> adminIds = groupChat.getAdminList().stream()
+                        .map(WxCpUserExternalGroupChatInfo.GroupAdmin::getUserId)
+                        .collect(Collectors.toList());
+                chat.setAdminList(toJson(adminIds));
+            }
 
             WecomGroupChat exist = groupChatMapper.selectOne(
                     new LambdaQueryWrapper<WecomGroupChat>()
                             .eq(WecomGroupChat::getChatId, chatId)
             );
+
+            // status: 全量同步时取列表API返回值，增量同步时保留DB已有值
+            if (status != null) {
+                chat.setStatus(status);
+            } else if (exist != null) {
+                chat.setStatus(exist.getStatus());
+            }
 
             if (exist != null) {
                 chat.setId(exist.getId());
@@ -282,10 +299,14 @@ public class WecomCustomerServiceImpl implements WecomCustomerService {
                     chatMember.setChatId(chatId);
                     chatMember.setUserId(member.getUserId());
                     chatMember.setMemberType(member.getType());
-                    chatMember.setJoinTime(member.getJoinTime());
+                    chatMember.setJoinTime(toDateTime(member.getJoinTime()));
                     chatMember.setJoinScene(member.getJoinScene());
                     chatMember.setGroupNickname(member.getGroupNickname());
                     chatMember.setName(member.getName());
+                    chatMember.setUnionId(member.getUnionId());
+                    if (member.getInvitor() != null) {
+                        chatMember.setInvitor(member.getInvitor().getUserId());
+                    }
                     groupChatMemberMapper.insert(chatMember);
                 }
             }
@@ -391,7 +412,7 @@ public class WecomCustomerServiceImpl implements WecomCustomerService {
     @Transactional(rollbackFor = Exception.class)
     public void syncSingleGroupChat(String chatId) {
         log.info("增量同步客群: chatId={}", chatId);
-        syncGroupChatDetail(chatId);
+        syncGroupChatDetail(chatId, null);
     }
 
     @Override
@@ -415,9 +436,8 @@ public class WecomCustomerServiceImpl implements WecomCustomerService {
                         .eq(WecomGroupChat::getChatId, chatId)
         );
         if (exist != null) {
-            exist.setStatus(0);
-            groupChatMapper.updateById(exist);
-            log.info("客群已标记为解散: chatId={}", chatId);
+            groupChatMapper.deleteById(exist.getId());
+            log.info("客群已软删除: chatId={}", chatId);
         } else {
             log.warn("客群不存在，无法标记解散: chatId={}", chatId);
         }
@@ -430,5 +450,10 @@ public class WecomCustomerServiceImpl implements WecomCustomerService {
             log.warn("JSON序列化失败", e);
             return null;
         }
+    }
+
+    private LocalDateTime toDateTime(Long timestamp) {
+        if (timestamp == null || timestamp <= 0) return null;
+        return LocalDateTime.ofInstant(java.time.Instant.ofEpochSecond(timestamp), java.time.ZoneId.systemDefault());
     }
 }

@@ -18,13 +18,21 @@ public class WecomGroupChat {
 
     private String owner;
 
-    private Long createTimeField;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createTimeField;
 
     private String notice;
 
     private Integer memberCount;
 
+    /** 跟进人状态: 0-跟进人正常 1-跟进人离职 2-离职继承中 3-离职继承完成 */
     private Integer status;
+
+    /** 群管理员userid列表(JSON数组) */
+    private String adminList;
+
+    /** 群成员版本号 */
+    private String memberVersion;
 
     @TableLogic
     private Integer deleted;

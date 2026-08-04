@@ -11,9 +11,15 @@ import {
 
 // ===== 字典 =====
 const dictStore = useDictStoreHook();
-const statusOptions = computed(() => dictStore.getDictByCode("customer_group_status"));
-const memberTypeOptions = computed(() => dictStore.getDictByCode("customer_group_member_type"));
-const joinSceneOptions = computed(() => dictStore.getDictByCode("customer_group_member_join_scene"));
+const statusOptions = computed(() =>
+  dictStore.getDictByCode("customer_group_status")
+);
+const memberTypeOptions = computed(() =>
+  dictStore.getDictByCode("customer_group_member_type")
+);
+const joinSceneOptions = computed(() =>
+  dictStore.getDictByCode("customer_group_member_join_scene")
+);
 
 const props = defineProps<{
   visible: boolean;
@@ -70,7 +76,12 @@ const getStatusText = (val: number) => {
 };
 
 const getStatusTagType = (val: number) => {
-  const map: Record<number, "danger" | "success"> = { 0: "danger", 1: "success" };
+  const map: Record<number, "success" | "danger" | "warning"> = {
+    0: "success",
+    1: "danger",
+    2: "warning",
+    3: "success"
+  };
   return map[val] || "info";
 };
 
@@ -94,11 +105,15 @@ const getJoinSceneText = (val: number) => {
   return item?.label ?? "未知";
 };
 
-// ===== 格式化时间戳 =====
-const formatTimestamp = (timestamp: number | null | undefined) => {
-  if (!timestamp) return "-";
-  return new Date(timestamp * 1000).toLocaleString();
-};
+// ===== 解析管理员列表 =====
+const parsedAdminList = computed(() => {
+  if (!props.groupChat?.adminList) return [];
+  try {
+    return JSON.parse(props.groupChat.adminList) as string[];
+  } catch {
+    return [];
+  }
+});
 </script>
 
 <template>
@@ -132,19 +147,40 @@ const formatTimestamp = (timestamp: number | null | undefined) => {
         <!-- 基本信息 -->
         <div class="flex-shrink-0">
           <h2 class="text-2xl font-bold mb-4">{{ groupChat.name }}</h2>
-          <el-descriptions :column="3" direction="vertical" border>
+          <br />
+          <el-descriptions :column="3" direction="vertical">
             <el-descriptions-item label="群聊ID">
               <span class="font-mono text-sm">{{ groupChat.chatId }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="群主">{{ groupChat.owner }}</el-descriptions-item>
-            <el-descriptions-item label="成员数">{{ groupChat.memberCount }}</el-descriptions-item>
-            <el-descriptions-item label="状态">
+            <el-descriptions-item label="群主">{{
+              groupChat.owner
+            }}</el-descriptions-item>
+            <el-descriptions-item label="成员数">{{
+              groupChat.memberCount
+            }}</el-descriptions-item>
+            <el-descriptions-item label="跟进状态">
               <el-tag :type="getStatusTagType(groupChat.status)" size="small">
                 {{ getStatusText(groupChat.status) }}
               </el-tag>
             </el-descriptions-item>
+            <el-descriptions-item label="管理员">
+              <template v-if="parsedAdminList.length">
+                <el-tag
+                  v-for="admin in parsedAdminList"
+                  :key="admin"
+                  size="small"
+                  class="mr-1"
+                >
+                  {{ admin }}
+                </el-tag>
+              </template>
+              <span v-else class="text-gray-400">-</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="成员版本号">{{
+              groupChat.memberVersion ?? "-"
+            }}</el-descriptions-item>
             <el-descriptions-item label="创建时间">
-              {{ formatTimestamp(groupChat.createTimeField) }}
+              {{ groupChat.createTimeField ?? "-" }}
             </el-descriptions-item>
             <el-descriptions-item label="记录创建时间">
               {{ groupChat.createTime }}
@@ -153,19 +189,11 @@ const formatTimestamp = (timestamp: number | null | undefined) => {
               {{ groupChat.updateTime }}
             </el-descriptions-item>
           </el-descriptions>
-
-          <!-- 群公告 -->
-          <div v-if="groupChat.notice" class="mt-4">
-            <div class="flex items-center gap-2 mb-2">
-              <el-icon class="text-orange-500"><i class="ri-megaphone-line" /></el-icon>
-              <span class="font-medium text-gray-700">群公告</span>
-            </div>
-            <el-card shadow="never" class="bg-orange-50 border-orange-200">
-              <div class="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                {{ groupChat.notice }}
-              </div>
-            </el-card>
-          </div>
+          <el-descriptions :column="1" direction="vertical">
+            <el-descriptions-item label="群公告">
+              {{ groupChat.notice || "-" }}
+            </el-descriptions-item>
+          </el-descriptions>
         </div>
 
         <el-divider />
@@ -177,25 +205,62 @@ const formatTimestamp = (timestamp: number | null | undefined) => {
             <el-tag type="info" size="small">共 {{ members.length }} 人</el-tag>
           </div>
           <el-table v-loading="membersLoading" :data="members" border stripe>
-            <el-table-column type="index" label="序号" width="60" align="center" />
+            <el-table-column
+              type="index"
+              label="序号"
+              width="60"
+              align="center"
+            />
             <el-table-column prop="name" label="姓名" width="100" />
-            <el-table-column prop="groupNickname" label="群昵称" width="120" show-overflow-tooltip />
-            <el-table-column prop="userId" label="UserID" width="140" show-overflow-tooltip />
-            <el-table-column label="成员类型" width="100" align="center">
+            <el-table-column
+              prop="groupNickname"
+              label="群昵称"
+              width="120"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              prop="userId"
+              label="UserID"
+              width="140"
+              show-overflow-tooltip
+            />
+            <el-table-column label="成员类型" width="140" align="center">
               <template #default="{ row }">
                 <el-tag :type="getMemberTypeTag(row.memberType)" size="small">
                   {{ getMemberTypeText(row.memberType) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="入群方式" width="100">
+            <el-table-column label="入群方式" width="180" align="center">
               <template #default="{ row }">
-                {{ getJoinSceneText(row.joinScene) }}
+                <el-tag size="small">
+                  {{ getJoinSceneText(row.joinScene) }}
+                </el-tag>
               </template>
             </el-table-column>
             <el-table-column label="入群时间" width="170">
               <template #default="{ row }">
-                {{ formatTimestamp(row.joinTime) }}
+                {{ row.joinTime ?? "-" }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="invitor"
+              label="邀请者"
+              width="120"
+              show-overflow-tooltip
+            >
+              <template #default="{ row }">
+                {{ row.invitor || "-" }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="unionId"
+              label="UnionID"
+              width="160"
+              show-overflow-tooltip
+            >
+              <template #default="{ row }">
+                {{ row.unionId || "-" }}
               </template>
             </el-table-column>
           </el-table>
