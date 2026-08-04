@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import Fullscreen from "~icons/ri/fullscreen-fill";
+import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
 import {
   getGroupChatMembers,
   type WecomGroupChat,
@@ -14,6 +16,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "update:visible", value: boolean): void;
 }>();
+
+// ===== 全屏控制 =====
+const isFullscreen = ref(false);
+const toggleFullscreen = () => {
+  isFullscreen.value = !isFullscreen.value;
+};
 
 // ===== 成员列表 =====
 const membersLoading = ref(false);
@@ -37,6 +45,7 @@ watch(
   () => props.visible,
   val => {
     if (val && props.groupChat) {
+      isFullscreen.value = false;
       fetchMembers();
     }
   }
@@ -72,44 +81,58 @@ const getJoinSceneText = (scene: number) => {
 };
 
 // ===== 格式化时间戳 =====
-const formatTimestamp = (timestamp: number) => {
+const formatTimestamp = (timestamp: number | null | undefined) => {
   if (!timestamp) return "-";
   return new Date(timestamp * 1000).toLocaleString();
 };
 </script>
 
 <template>
-  <el-drawer
+  <el-dialog
     :model-value="visible"
     title="客群详情"
-    direction="rtl"
-    size="100%"
-    :before-close="handleClose"
-    class="group-chat-detail-drawer"
+    :width="isFullscreen ? '100%' : '900px'"
+    :fullscreen="isFullscreen"
+    :close-on-click-modal="false"
+    destroy-on-close
+    @close="handleClose"
   >
+    <template #header>
+      <div class="flex items-center justify-between w-full">
+        <span class="text-lg font-medium">客群详情</span>
+        <IconifyIconOffline
+          class="cursor-pointer"
+          :icon="isFullscreen ? ExitFullscreen : Fullscreen"
+          @click="toggleFullscreen"
+        />
+      </div>
+    </template>
+
     <template v-if="groupChat">
-      <div class="flex flex-col h-full">
+      <div
+        class="flex flex-col"
+        :style="
+          isFullscreen ? 'height: calc(100vh - 120px)' : 'max-height: 70vh'
+        "
+      >
         <!-- 基本信息 -->
-        <div class="p-6 border-b border-gray-200">
+        <div class="border-b border-gray-200 flex-shrink-0">
           <h2 class="text-2xl font-bold mb-4">{{ groupChat.name }}</h2>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <span class="text-gray-500">群主：</span>
-              <span>{{ groupChat.owner }}</span>
-            </div>
-            <div>
-              <span class="text-gray-500">成员数：</span>
-              <span>{{ groupChat.memberCount }}</span>
-            </div>
-            <div>
-              <span class="text-gray-500">创建时间：</span>
-              <span>{{ formatTimestamp(groupChat.createTimeField) }}</span>
-            </div>
-            <div>
-              <span class="text-gray-500">Chat ID：</span>
+          <br />
+          <el-descriptions :column="2" direction="vertical">
+            <el-descriptions-item label="群主">{{
+              groupChat.owner
+            }}</el-descriptions-item>
+            <el-descriptions-item label="成员数">{{
+              groupChat.memberCount
+            }}</el-descriptions-item>
+            <el-descriptions-item label="创建时间">{{
+              formatTimestamp(groupChat.createTimeField)
+            }}</el-descriptions-item>
+            <el-descriptions-item label="Chat ID">
               <span class="font-mono text-sm">{{ groupChat.chatId }}</span>
-            </div>
-          </div>
+            </el-descriptions-item>
+          </el-descriptions>
           <div v-if="groupChat.notice" class="mt-4">
             <span class="text-gray-500">群公告：</span>
             <div class="mt-2 p-3 bg-gray-50 rounded">
@@ -118,10 +141,12 @@ const formatTimestamp = (timestamp: number) => {
           </div>
         </div>
 
+        <br />
+
         <!-- 成员列表 -->
-        <div class="flex-1 p-6 overflow-auto">
+        <div class="flex-1 overflow-auto">
           <h3 class="text-lg font-medium mb-4">成员列表</h3>
-          <el-table v-loading="membersLoading" :data="members" border>
+          <el-table v-loading="membersLoading" :data="members" border stripe>
             <el-table-column prop="name" label="姓名" width="120" />
             <el-table-column prop="groupNickname" label="群昵称" width="120" />
             <el-table-column
@@ -132,7 +157,7 @@ const formatTimestamp = (timestamp: number) => {
             />
             <el-table-column label="成员类型" width="120" align="center">
               <template #default="{ row }">
-                <el-tag :type="getMemberTypeTag(row.memberType)">
+                <el-tag :type="getMemberTypeTag(row.memberType)" size="small">
                   {{ getMemberTypeText(row.memberType) }}
                 </el-tag>
               </template>
@@ -151,11 +176,5 @@ const formatTimestamp = (timestamp: number) => {
         </div>
       </div>
     </template>
-  </el-drawer>
+  </el-dialog>
 </template>
-
-<style scoped>
-.group-chat-detail-drawer :deep(.el-drawer__body) {
-  padding: 0;
-}
-</style>

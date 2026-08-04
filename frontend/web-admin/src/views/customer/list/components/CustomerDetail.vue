@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useDictStoreHook } from "@/store/modules/dict";
-import { getCustomerFollows, type WecomCustomer, type WecomCustomerFollow } from "@/api/customer";
+import Fullscreen from "~icons/ri/fullscreen-fill";
+import ExitFullscreen from "~icons/ri/fullscreen-exit-fill";
+import {
+  getCustomerFollows,
+  type WecomCustomer,
+  type WecomCustomerFollow
+} from "@/api/customer";
 
 const props = defineProps<{
   visible: boolean;
@@ -12,9 +18,17 @@ const emit = defineEmits<{
   (e: "update:visible", value: boolean): void;
 }>();
 
+// ===== 全屏控制 =====
+const isFullscreen = ref(false);
+const toggleFullscreen = () => {
+  isFullscreen.value = !isFullscreen.value;
+};
+
 // ===== 字典 =====
 const dictStore = useDictStoreHook();
-const genderOptions = computed(() => dictStore.getDictByCode("customer_gender"));
+const genderOptions = computed(() =>
+  dictStore.getDictByCode("customer_gender")
+);
 const typeOptions = computed(() => dictStore.getDictByCode("customer_type"));
 
 const genderLabel = (val: number) => {
@@ -28,12 +42,18 @@ const typeLabel = (val: number) => {
 };
 
 const genderTagType = (val: number) => {
-  const map: Record<number, "primary" | "success" | "warning" | "info"> = { 1: "primary", 2: "success" };
+  const map: Record<number, "primary" | "success" | "warning" | "info"> = {
+    1: "primary",
+    2: "success"
+  };
   return map[val] || "info";
 };
 
 const typeTagType = (val: number) => {
-  const map: Record<number, "primary" | "success"> = { 1: "success", 2: "primary" };
+  const map: Record<number, "primary" | "success"> = {
+    1: "success",
+    2: "primary"
+  };
   return map[val] || "info";
 };
 
@@ -55,11 +75,15 @@ const fetchFollows = async () => {
   }
 };
 
-watch(() => props.visible, (val) => {
-  if (val && props.customer) {
-    fetchFollows();
+watch(
+  () => props.visible,
+  val => {
+    if (val && props.customer) {
+      isFullscreen.value = false;
+      fetchFollows();
+    }
   }
-});
+);
 
 // ===== 关闭弹窗 =====
 const handleClose = () => {
@@ -84,9 +108,24 @@ const getAddWayText = (addWay: string) => {
   return map[addWay] || addWay;
 };
 
+// ===== 标签类型转换 =====
+const getTagTypeText = (type: number) => {
+  const map: Record<number, string> = {
+    1: "企业设置",
+    2: "用户自定义",
+    3: "规则组标签"
+  };
+  return map[type] || "未知";
+};
+
 // ===== 视频号场景转换 =====
 const getChannelSourceText = (source: number) => {
-  const map: Record<number, string> = { 0: "未知", 1: "视频号主页", 2: "视频号直播间", 3: "视频号留资服务" };
+  const map: Record<number, string> = {
+    0: "未知",
+    1: "视频号主页",
+    2: "视频号直播间",
+    3: "视频号留资服务"
+  };
   return map[source] || "未知";
 };
 
@@ -99,73 +138,91 @@ const parseJson = (jsonStr: string | null | undefined) => {
     return [];
   }
 };
+
+// ===== 格式化时间戳 =====
+const formatTimestamp = (timestamp: number | null | undefined) => {
+  if (!timestamp) return "-";
+  return new Date(timestamp * 1000).toLocaleString();
+};
 </script>
 
 <template>
-  <el-drawer
+  <el-dialog
     :model-value="visible"
     title="客户详情"
-    direction="rtl"
-    size="100%"
-    :before-close="handleClose"
-    class="customer-detail-drawer"
+    :width="isFullscreen ? '100%' : '900px'"
+    :fullscreen="isFullscreen"
+    :close-on-click-modal="false"
+    destroy-on-close
+    @close="handleClose"
   >
+    <template #header>
+      <div class="flex items-center justify-between w-full">
+        <span class="text-lg font-medium">客户详情</span>
+        <IconifyIconOffline
+          class="cursor-pointer"
+          :icon="isFullscreen ? ExitFullscreen : Fullscreen"
+          @click="toggleFullscreen"
+        />
+      </div>
+    </template>
+
     <template v-if="customer">
-      <div class="flex flex-col h-full">
+      <div
+        class="flex flex-col"
+        :style="
+          isFullscreen ? 'height: calc(100vh - 120px)' : 'max-height: 70vh'
+        "
+      >
         <!-- 基本信息 -->
-        <div class="p-6 border-b border-gray-200">
+        <div class="border-b border-gray-200 flex-shrink-0">
           <div class="flex items-start gap-6">
-            <el-avatar :src="customer.avatar" :size="80">
+            <el-avatar :src="customer.avatar" :size="60">
               {{ customer.name?.charAt(0) }}
             </el-avatar>
             <div class="flex-1">
               <h2 class="text-2xl font-bold mb-4">{{ customer.name }}</h2>
-              <div class="grid grid-cols-3 gap-4">
-                <div>
-                  <span class="text-gray-500">客户ID：</span>
-                  <span class="font-mono text-sm">{{ customer.id }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-500">External UserID：</span>
-                  <span class="font-mono text-sm">{{ customer.externalUserid }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-500">性别：</span>
+              <br />
+              <el-descriptions :column="3" direction="vertical">
+                <el-descriptions-item label="客户ID">{{
+                  customer.id
+                }}</el-descriptions-item>
+                <el-descriptions-item label="External UserID">
+                  <span class="font-mono text-sm">{{
+                    customer.externalUserid
+                  }}</span>
+                </el-descriptions-item>
+                <el-descriptions-item label="性别">
                   <el-tag :type="genderTagType(customer.gender)" size="small">
                     {{ genderLabel(customer.gender) }}
                   </el-tag>
-                </div>
-                <div>
-                  <span class="text-gray-500">类型：</span>
+                </el-descriptions-item>
+                <el-descriptions-item label="类型">
                   <el-tag :type="typeTagType(customer.type)" size="small">
                     {{ typeLabel(customer.type) }}
                   </el-tag>
-                </div>
-                <div>
-                  <span class="text-gray-500">职位：</span>
-                  <span>{{ customer.position || '-' }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-500">所属企业：</span>
-                  <span>{{ customer.corpName || '-' }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-500">企业全称：</span>
-                  <span>{{ customer.corpFullName || '-' }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-500">UnionID：</span>
-                  <span class="font-mono text-sm">{{ customer.unionId || '-' }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-500">创建时间：</span>
-                  <span>{{ customer.createTime }}</span>
-                </div>
-                <div>
-                  <span class="text-gray-500">更新时间：</span>
-                  <span>{{ customer.updateTime }}</span>
-                </div>
-              </div>
+                </el-descriptions-item>
+                <el-descriptions-item label="职位">{{
+                  customer.position || "-"
+                }}</el-descriptions-item>
+                <el-descriptions-item label="所属企业">{{
+                  customer.corpName || "-"
+                }}</el-descriptions-item>
+                <el-descriptions-item label="企业全称">{{
+                  customer.corpFullName || "-"
+                }}</el-descriptions-item>
+                <el-descriptions-item label="UnionID">
+                  <span class="font-mono text-sm">{{
+                    customer.unionId || "-"
+                  }}</span>
+                </el-descriptions-item>
+                <el-descriptions-item label="创建时间">{{
+                  customer.createTime
+                }}</el-descriptions-item>
+                <el-descriptions-item label="更新时间">{{
+                  customer.updateTime
+                }}</el-descriptions-item>
+              </el-descriptions>
               <div v-if="customer.externalProfile" class="mt-4">
                 <span class="text-gray-500">扩展属性：</span>
                 <span class="text-sm">{{ customer.externalProfile }}</span>
@@ -174,66 +231,93 @@ const parseJson = (jsonStr: string | null | undefined) => {
           </div>
         </div>
 
+        <br />
+
         <!-- 跟进人列表 -->
-        <div class="flex-1 p-6 overflow-auto">
-          <h3 class="text-lg font-medium mb-4">跟进人列表</h3>
-          <el-table :data="follows" v-loading="followsLoading" border>
-            <el-table-column prop="userid" label="员工UserID" width="130" />
-            <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="description" label="描述" min-width="120" show-overflow-tooltip />
-            <el-table-column label="添加方式" width="120">
-              <template #default="{ row }">
-                {{ getAddWayText(row.addWay) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="state" label="状态标签" width="120" show-overflow-tooltip />
-            <el-table-column prop="remarkCompany" label="企业备注" width="120" show-overflow-tooltip />
-            <el-table-column prop="remarkCorpName" label="企业名称备注" width="130" show-overflow-tooltip />
-            <el-table-column label="手机号备注" width="130" show-overflow-tooltip>
-              <template #default="{ row }">
-                {{ parseJson(row.remarkMobiles).join(', ') || '-' }}
-              </template>
-            </el-table-column>
-            <el-table-column label="标签" min-width="200">
-              <template #default="{ row }">
-                <template v-if="parseJson(row.tags).length">
-                  <el-tag
-                    v-for="(tag, idx) in parseJson(row.tags)"
-                    :key="idx"
-                    size="small"
-                    class="mr-1 mb-1"
-                  >
-                    {{ tag.tagName }}
-                    <span v-if="tag.groupName" class="text-gray-400 ml-1">({{ tag.groupName }})</span>
-                  </el-tag>
+        <div class="flex-1 overflow-auto">
+          <div v-loading="followsLoading">
+            <template v-if="follows.length">
+              <el-card
+                v-for="follow in follows"
+                :key="follow.id"
+                class="mb-4"
+                shadow="hover"
+              >
+                <template #header>
+                  <div class="flex items-center justify-between">
+                    <span class="font-medium">跟进人：{{ follow.userid }}</span>
+                    <el-tag size="small">ID: {{ follow.id }}</el-tag>
+                  </div>
                 </template>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="视频号" width="150" show-overflow-tooltip>
-              <template #default="{ row }">
-                <template v-if="row.wechatChannelsNickname">
-                  <div>{{ row.wechatChannelsNickname }}</div>
-                  <div class="text-xs text-gray-400">{{ getChannelSourceText(row.wechatChannelsSource) }}</div>
-                </template>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="operatorUserid" label="操作人" width="120" />
-            <el-table-column label="添加时间" width="170">
-              <template #default="{ row }">
-                {{ row.followCreateTime ? new Date(row.followCreateTime * 1000).toLocaleString() : '-' }}
-              </template>
-            </el-table-column>
-          </el-table>
+                <el-descriptions :column="3" size="small" direction="vertical">
+                  <el-descriptions-item label="备注">{{
+                    follow.remark || "-"
+                  }}</el-descriptions-item>
+                  <el-descriptions-item label="描述">{{
+                    follow.description || "-"
+                  }}</el-descriptions-item>
+                  <el-descriptions-item label="添加方式">{{
+                    getAddWayText(follow.addWay)
+                  }}</el-descriptions-item>
+                  <el-descriptions-item label="状态标签">{{
+                    follow.state || "-"
+                  }}</el-descriptions-item>
+                  <el-descriptions-item label="企业备注">{{
+                    follow.remarkCompany || "-"
+                  }}</el-descriptions-item>
+                  <el-descriptions-item label="企业名称备注">{{
+                    follow.remarkCorpName || "-"
+                  }}</el-descriptions-item>
+                  <el-descriptions-item label="手机号备注">
+                    {{ parseJson(follow.remarkMobiles).join(", ") || "-" }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="操作人">{{
+                    follow.operatorUserid || "-"
+                  }}</el-descriptions-item>
+                  <el-descriptions-item label="添加时间">{{
+                    formatTimestamp(follow.followCreateTime)
+                  }}</el-descriptions-item>
+                  <el-descriptions-item label="记录创建时间">{{
+                    follow.createTime || "-"
+                  }}</el-descriptions-item>
+                  <el-descriptions-item label="标签" :span="3">
+                    <template v-if="parseJson(follow.tags).length">
+                      <el-tag
+                        v-for="(tag, idx) in parseJson(follow.tags)"
+                        :key="idx"
+                        size="small"
+                        class="mr-1 mb-1"
+                      >
+                        {{ tag.tagName }}
+                        <span v-if="tag.groupName" class="text-gray-400 ml-1"
+                          >({{ tag.groupName }})</span
+                        >
+                        <span class="text-gray-400 ml-1"
+                          >[{{ getTagTypeText(tag.type) }}]</span
+                        >
+                      </el-tag>
+                    </template>
+                    <span v-else>-</span>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="标签ID" :span="3">
+                    {{ parseJson(follow.tagIds).join(", ") || "-" }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="视频号">
+                    <template v-if="follow.wechatChannelsNickname">
+                      <div>{{ follow.wechatChannelsNickname }}</div>
+                      <div class="text-xs text-gray-400">
+                        {{ getChannelSourceText(follow.wechatChannelsSource) }}
+                      </div>
+                    </template>
+                    <span v-else>-</span>
+                  </el-descriptions-item>
+                </el-descriptions>
+              </el-card>
+            </template>
+            <el-empty v-else description="暂无跟进人数据" />
+          </div>
         </div>
       </div>
     </template>
-  </el-drawer>
+  </el-dialog>
 </template>
-
-<style scoped>
-.customer-detail-drawer :deep(.el-drawer__body) {
-  padding: 0;
-}
-</style>
