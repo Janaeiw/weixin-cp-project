@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import type { FormInstance, FormRules } from "element-plus";
+import { useDictStoreHook } from "@/store/modules/dict";
 import {
   getUserPage,
   createUser,
@@ -20,6 +21,16 @@ import {
 import { isValidUrl, isValidEmail, isValidPhone } from "@/utils/validate";
 
 defineOptions({ name: "SystemUser" });
+
+// ===== 字典 =====
+const dictStore = useDictStoreHook();
+const globalStatusOptions = computed(() =>
+  dictStore.getDictByCode("global_status")
+);
+const getStatusLabel = (val: number) => {
+  const item = globalStatusOptions.value.find(d => d.value === String(val));
+  return item?.label ?? "未知";
+};
 
 // ===== 搜索 =====
 const searchForm = reactive({
@@ -322,8 +333,12 @@ onMounted(() => {
             placeholder="全部"
             clearable
           >
-            <el-option label="正常" :value="1" />
-            <el-option label="禁用" :value="0" />
+            <el-option
+              v-for="item in globalStatusOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="Number(item.value)"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -378,7 +393,7 @@ onMounted(() => {
               :type="row.status === 1 ? 'success' : 'danger'"
               size="small"
             >
-              {{ row.status === 1 ? "正常" : "禁用" }}
+              {{ getStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -493,8 +508,12 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio :value="1">正常</el-radio>
-            <el-radio :value="0">禁用</el-radio>
+            <el-radio
+              v-for="item in globalStatusOptions"
+              :key="item.value"
+              :value="Number(item.value)"
+              >{{ item.label }}</el-radio
+            >
           </el-radio-group>
         </el-form-item>
       </el-form>
