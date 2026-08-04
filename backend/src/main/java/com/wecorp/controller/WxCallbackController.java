@@ -32,6 +32,7 @@ import java.util.Arrays;
 public class WxCallbackController {
 
     private final WxCpService wxCpService;
+    private final WxCpMessageRouter wxCpMessageRouter;
 
     /**
      * URL 验证（GET）
@@ -98,8 +99,7 @@ public class WxCallbackController {
                 inMessage.getContent() != null ? inMessage.getContent() : "(event)");
 
         // 路由消息并返回加密响应
-        WxCpMessageRouter router = new WxCpMessageRouter(wxCpService);
-        WxCpXmlOutMessage outMessage = router.route(inMessage);
+        WxCpXmlOutMessage outMessage = wxCpMessageRouter.route(inMessage);
 
         if (outMessage != null) {
             response.setContentType("application/xml;charset=UTF-8");

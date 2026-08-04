@@ -15,8 +15,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * 同步策略：
  * 1. 首次全量同步：应用启动时自动执行一次
- * 2. 定时全量同步：每天凌晨1点执行（企微API不支持增量查询，暂用全量）
- * 3. 增量同步：待接入企微回调事件后实现
+ * 2. 定时全量同步：每天凌晨1点执行（兜底，确保数据一致性）
+ * 3. 增量同步：通过企微回调事件实时触发（见 ExternalContactEventHandler）
  */
 @Slf4j
 @Component
@@ -35,8 +35,7 @@ public class WecomCustomerSyncTask implements ApplicationRunner {
     }
 
     /**
-     * 定时全量同步：每天凌晨1点
-     * TODO: 后续接入企微回调事件后，改为增量同步
+     * 定时全量同步：每天凌晨1点（兜底，与回调增量同步互补）
      */
     @Scheduled(cron = "0 0 1 * * ?")
     public void scheduledSync() {

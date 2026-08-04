@@ -221,7 +221,7 @@ onMounted(fetchData);
         border
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
       >
-        <el-table-column prop="title" label="菜单名称" min-width="180" />
+        <el-table-column prop="title" label="菜单名称" min-width="180" fixed />
         <el-table-column
           prop="menuType"
           label="菜单类型"

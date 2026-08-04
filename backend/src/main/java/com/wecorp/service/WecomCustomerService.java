@@ -56,4 +56,34 @@ public interface WecomCustomerService {
      * @return 客群详情
      */
     WecomGroupChat getGroupChatDetail(String chatId);
+
+    /**
+     * 增量同步单个客户（回调事件触发）
+     *
+     * @param externalUserid 外部联系人ID
+     * @param userid         企业成员userid
+     */
+    void syncSingleCustomer(String externalUserid, String userid);
+
+    /**
+     * 增量同步单个客群（回调事件触发）
+     *
+     * @param chatId 群聊ID
+     */
+    void syncSingleGroupChat(String chatId);
+
+    /**
+     * 删除客户跟进人关系（回调事件触发）
+     *
+     * @param externalUserid 外部联系人ID
+     * @param userid         企业成员userid
+     */
+    void deleteCustomerFollow(String externalUserid, String userid);
+
+    /**
+     * 标记客群为已解散（回调事件触发）
+     *
+     * @param chatId 群聊ID
+     */
+    void dismissGroupChat(String chatId);
 }

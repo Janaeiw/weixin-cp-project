@@ -370,6 +370,49 @@ public class WecomCustomerServiceImpl implements WecomCustomerService {
         );
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void syncSingleCustomer(String externalUserid, String userid) {
+        log.info("增量同步客户: externalUserid={}, userid={}", externalUserid, userid);
+        syncCustomerDetail(externalUserid, userid);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void syncSingleGroupChat(String chatId) {
+        log.info("增量同步客群: chatId={}", chatId);
+        syncGroupChatDetail(chatId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteCustomerFollow(String externalUserid, String userid) {
+        log.info("删除客户跟进人关系: externalUserid={}, userid={}", externalUserid, userid);
+        int deleted = customerFollowMapper.delete(
+                new LambdaQueryWrapper<WecomCustomerFollow>()
+                        .eq(WecomCustomerFollow::getExternalUserid, externalUserid)
+                        .eq(WecomCustomerFollow::getUserid, userid)
+        );
+        log.info("删除跟进人关系完成: externalUserid={}, userid={}, 删除记录数={}", externalUserid, userid, deleted);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void dismissGroupChat(String chatId) {
+        log.info("标记客群已解散: chatId={}", chatId);
+        WecomGroupChat exist = groupChatMapper.selectOne(
+                new LambdaQueryWrapper<WecomGroupChat>()
+                        .eq(WecomGroupChat::getChatId, chatId)
+        );
+        if (exist != null) {
+            exist.setStatus(0);
+            groupChatMapper.updateById(exist);
+            log.info("客群已标记为解散: chatId={}", chatId);
+        } else {
+            log.warn("客群不存在，无法标记解散: chatId={}", chatId);
+        }
+    }
+
     private String toJson(Object obj) {
         try {
             return objectMapper.writeValueAsString(obj);
