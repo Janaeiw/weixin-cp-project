@@ -1,0 +1,6 @@
+{"file":".trellis/tasks/08-03-wecom-customer/prd.md","reason":"需求文档，功能范围和接口设计"}
+{"file":".trellis/tasks/08-03-wecom-customer/research/wecom-external-contact-api.md","reason":"企微外部联系人API调研，SDK方法和数据结构"}
+{"file":".trellis/tasks/08-03-wecom-customer/research/existing-wecom-code.md","reason":"现有企微代码结构，参考实现方式"}
+{"file":"backend/src/main/java/com/wecorp/controller/wx/MomentController.java","reason":"现有企微Controller实现参考"}
+{"file":"backend/src/main/java/com/wecorp/entity/User.java","reason":"现有Entity实现参考"}
+{"file":"frontend/web-admin/src/api/wx/member.ts","reason":"现有企微前端API参考"}
