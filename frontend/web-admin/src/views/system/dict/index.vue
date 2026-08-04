@@ -387,7 +387,7 @@ onMounted(fetchData);
           <el-input
             v-model="form.remark"
             type="textarea"
-            :rows="3"
+            :rows="10"
             placeholder="请输入备注"
           />
         </el-form-item>
@@ -418,7 +418,7 @@ onMounted(fetchData);
         border
         size="small"
       >
-        <el-table-column type="index" label="编号" width="60" align="center" />
+        <el-table-column type="index" label="编号" width="70" align="center" />
         <el-table-column prop="label" label="显示文本" min-width="120" />
         <el-table-column prop="value" label="字典值" min-width="120" />
         <el-table-column prop="sort" label="排序" width="70" align="center" />
