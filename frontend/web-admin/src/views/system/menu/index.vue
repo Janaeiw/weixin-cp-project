@@ -262,6 +262,7 @@ onMounted(fetchData);
           show-overflow-tooltip
         />
         <el-table-column prop="name" label="路由名称" width="140" />
+        <el-table-column prop="permission" label="权限标识" width="140" />
         <el-table-column prop="rank" label="排序" width="80" align="center" />
         <el-table-column prop="showLink" label="显示" width="80" align="center">
           <template #default="{ row }">
