@@ -1,5 +1,7 @@
 package com.wecorp.task;
 
+import com.wecorp.mapper.WecomCustomerMapper;
+import com.wecorp.mapper.WecomGroupChatMapper;
 import com.wecorp.service.WecomCustomerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 企微客户数据同步任务
  *
  * 同步策略：
- * 1. 首次全量同步：应用启动时自动执行一次
+ * 1. 首次全量同步：应用启动时，若数据库无数据则自动执行一次全量同步
  * 2. 定时全量同步：每天凌晨1点执行（兜底，确保数据一致性）
  * 3. 增量同步：通过企微回调事件实时触发（见 ExternalContactEventHandler）
  */
@@ -24,13 +26,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class WecomCustomerSyncTask implements ApplicationRunner {
 
     private final WecomCustomerService wecomCustomerService;
+    private final WecomCustomerMapper wecomCustomerMapper;
+    private final WecomGroupChatMapper wecomGroupChatMapper;
     private final AtomicBoolean syncing = new AtomicBoolean(false);
 
     /**
-     * 首次全量同步：应用启动完成后执行（不阻塞启动）
+     * 启动时按需全量同步：数据库有数据则跳过，无数据则执行全量同步
      */
     @Override
     public void run(ApplicationArguments args) {
+        boolean hasCustomerData = wecomCustomerMapper.selectCount(null) > 0;
+        boolean hasGroupData = wecomGroupChatMapper.selectCount(null) > 0;
+        if (hasCustomerData && hasGroupData) {
+            log.info("启动同步：客户和客群数据已存在，跳过全量同步，等待定时任务或回调更新");
+            return;
+        }
+        log.info("启动同步：检测到数据库无数据，开始首次全量同步");
         new Thread(() -> doSync("首次全量")).start();
     }
 
