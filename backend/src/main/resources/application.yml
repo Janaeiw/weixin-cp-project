@@ -3,7 +3,7 @@ spring:
     name: wecorp-backend
 
   datasource:
-    url: jdbc:mysql://localhost:3306/wecorp?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://localhost:3306/wecorp?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false&createDatabaseIfNotExist=true
     username: root
     password:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -24,6 +24,10 @@ spring:
         - classpath:db/migration/V1.0.8__menu_permission_refactor.sql
         - classpath:db/migration/V1.0.9__user_add_wx_userid.sql
         - classpath:db/migration/V1.0.10__operation_log_table.sql
+        - classpath:db/migration/V1.0.11__wecom_customer_tables.sql
+        - classpath:db/migration/V1.0.12__add_follow_wechat_channels.sql
+        - classpath:db/migration/V1.0.13__group_chat_add_fields.sql
+        - classpath:db/migration/V1.0.14__timestamp_to_datetime.sql
 
   servlet:
     multipart:
