@@ -87,7 +87,7 @@ public class DataInitializer implements ApplicationRunner {
 
     private void seedMenus() {
         // ===== 系统管理菜单（已存在逻辑） =====
-        Menu systemMenu = seedParentMenu("/system", "系统管理", "ep:setting", 99);
+        Menu systemMenu = seedParentMenu("/system", "System", "系统管理", "ep:setting", 99);
 
         seedChildMenu(systemMenu.getId(), "/system/user", "system/user/index", "SystemUser", "用户管理", 1);
         seedChildMenu(systemMenu.getId(), "/system/role", "system/role/index", "SystemRole", "角色管理", 2);
@@ -100,11 +100,11 @@ public class DataInitializer implements ApplicationRunner {
         seedChildMenu(systemMenu.getId(), "/system/job", "system/job/index", "SystemJob", "定时任务管理", 9);
 
         // ===== 权限管理菜单 =====
-        Menu permMenu = seedParentMenu("/permission", "权限管理", "ep:lollipop", 10);
+        Menu permMenu = seedParentMenu("/permission", "Permission", "权限管理", "ep:lollipop", 100);
         Long permId = permMenu.getId();
 
         seedChildMenu(permId, "/permission/page/index", "permission/page/index", "PermissionPage", "页面权限", 1);
-        Menu btnMenu = seedChildMenu(permId, "/permission/button", null, null, "按钮权限", 2);
+        Menu btnMenu = seedChildMenu(permId, "/permission/button", null, "PermissionButton", "按钮权限", 2);
         Menu btnRouterMenu = seedChildMenu(btnMenu.getId(), "/permission/button/router", "permission/button/index", "PermissionButtonRouter", "路由返回按钮权限", 1);
         seedChildMenu(btnMenu.getId(), "/permission/button/login", "permission/button/perms", "PermissionButtonLogin", "登录接口返回按钮权限", 2);
 
@@ -113,7 +113,7 @@ public class DataInitializer implements ApplicationRunner {
         seedButtonMenu(btnRouterMenu.getId(), "permission:btn:delete", "删除", 3);
 
         // ===== 六库管理菜单 =====
-        Menu libMenu = seedParentMenu("/library", "六库管理", "ep:collection", 12);
+        Menu libMenu = seedParentMenu("/library", "Library", "六库管理", "ep:collection", 12);
         Long libId = libMenu.getId();
 
         seedChildMenu(libId, "/library/product", "library/product/index", "LibraryProduct", "产品库", 1);
@@ -123,6 +123,13 @@ public class DataInitializer implements ApplicationRunner {
         seedChildMenu(libId, "/library/activity", "library/activity/index", "LibraryActivity", "活动库", 5);
         seedChildMenu(libId, "/library/tool", "library/tool/index", "LibraryTool", "工具库", 6);
 
+        // ===== 客户管理菜单 =====
+        Menu custMenu = seedParentMenu("/customer", "Customer", "客户管理", "ep:user", 11);
+        Long custId = custMenu.getId();
+
+        seedChildMenu(custId, "/customer/list", "customer/list/index", "CustomerList", "客户列表", 1);
+        seedChildMenu(custId, "/customer/group", "customer/group/index", "CustomerGroup", "客群列表", 2);
+
         // ===== admin 角色绑定 systemRouter 所有菜单 =====
         Role adminRole = roleMapper.selectOne(
                 new LambdaQueryWrapper<Role>().eq(Role::getRoleKey, "admin"));
@@ -131,13 +138,14 @@ public class DataInitializer implements ApplicationRunner {
         }
     }
 
-    private Menu seedParentMenu(String path, String title, String icon, int rank) {
+    private Menu seedParentMenu(String path, String name, String title, String icon, int rank) {
         Menu existing = menuMapper.selectOne(
                 new LambdaQueryWrapper<Menu>().eq(Menu::getPath, path));
         if (existing != null) return existing;
         Menu menu = new Menu();
         menu.setParentId(0L);
         menu.setPath(path);
+        menu.setName(name);
         menu.setTitle(title);
         menu.setIcon(icon);
         menu.setRank(rank);
